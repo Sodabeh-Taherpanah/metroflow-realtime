@@ -20,6 +20,13 @@
     ],
     "paths": {
       "@/*": ["./*"]
+    },
+    "baseUrl": ".",
+    "paths": {
+      "@/core/*": ["core/*"],
+      "@/modules/*": ["modules/*"],
+      "@/components/*": ["components/*"],
+      "@/providers/*": ["providers/*"]
     }
   },
   "include": [
