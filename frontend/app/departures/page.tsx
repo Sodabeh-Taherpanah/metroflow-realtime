@@ -4,37 +4,62 @@ import React, { useEffect, useState } from 'react';
 import socket from '../../utils/websocket';
 
 interface Departure {
-  id: string;
-  train: string;
-  time: string;
+  tripId: string;
+  stop: {
+    id: string;
+    name: string;
+  };
+  when: string;
+  plannedWhen: string;
+  direction: string;
+  line: {
+    name: string;
+  };
 }
 
 const RealTimeDepartures = () => {
   const [departures, setDepartures] = useState<Departure[]>([]);
+  const [stationId] = useState('900029305'); // Default station
 
   useEffect(() => {
     socket.connect();
 
-    socket.on('departures', (data: Departure[]) => {
-      setDepartures(data);
+    // Subscribe to departures for the station
+    socket.emit('subscribe:departures', { stationId });
+
+    socket.on('departures:update', (data: { stationId: string; departures: Departure[] }) => {
+      setDepartures(Array.isArray(data.departures) ? data.departures : []);
     });
 
     return () => {
-      socket.off('departures');
+      socket.emit('unsubscribe:departures', { stationId });
+      socket.off('departures:update');
       socket.disconnect();
     };
-  }, []);
+  }, [stationId]);
 
   return (
     <div>
       <h1>Real-Time Departures</h1>
-      <ul>
-        {departures.map((departure: Departure) => (
-          <li key={departure.id}>
-            {departure.train} - {departure.time}
-          </li>
-        ))}
-      </ul>
+      <p>Station: Berlin, Staaken Bhf</p>
+      {departures.length === 0 ? (
+        <p>Loading departures...</p>
+      ) : (
+        <ul>
+          {departures.map((departure: Departure, index: number) => {
+            const lineName = departure.line?.name ?? 'Unknown Line';
+            const direction = departure.direction ?? 'Unknown Direction';
+            const whenValue = departure.when ?? departure.plannedWhen;
+            const whenLabel = whenValue ? new Date(whenValue).toLocaleTimeString() : 'Unknown Time';
+
+            return (
+              <li key={departure.tripId ?? whenValue ?? index}>
+                <strong>{lineName}</strong> → {direction} | {whenLabel}
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 };

@@ -10,6 +10,7 @@ import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { TerminusModule } from '@nestjs/terminus';
 import { CacheModule } from '@nestjs/cache-manager';
+import { HttpModule } from '@nestjs/axios';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { LoggerModule } from './common/logger/logger.module';
@@ -80,6 +81,7 @@ class SecurityHeadersMiddleware implements NestMiddleware {
     TerminusModule,
     LoggerModule,
     ConfigurationModule,
+    HttpModule,
     // Modules that depend on TypeORM are disabled for now
     ProvidersModule,
     StationsModule,

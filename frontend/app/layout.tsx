@@ -83,6 +83,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <meta name="theme-color" content="#1d4ed8" />
         </head>
         <body
+          suppressHydrationWarning
           className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen bg-white dark:bg-black text-gray-900 dark:text-gray-50 transition-colors`}
         >
           <ThemeProvider>

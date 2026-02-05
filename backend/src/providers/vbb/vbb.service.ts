@@ -3,15 +3,21 @@ import { Provider } from '../provider.interface';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
 
-interface VbbLocation {
+export interface VbbLocation {
+  type: string;
   id: string;
   name: string;
-  latitude?: number;
-  longitude?: number;
-  type?: string;
+  location?: {
+    type: string;
+    id: string;
+    latitude: number;
+    longitude: number;
+  };
+  products?: Record<string, boolean>;
+  stationDHID?: string;
 }
 
-interface VbbDeparture {
+export interface VbbDeparture {
   tripId: string;
   lineId: string;
   lineName: string;
@@ -42,7 +48,8 @@ export class VbbService implements Provider {
           params: { query, limit },
         }),
       );
-      return response.data?.locations || [];
+      // VBB API returns array directly, not wrapped in locations object
+      return Array.isArray(response.data) ? response.data : [];
     } catch (error) {
       console.error('Error searching locations from VBB API:', error);
       throw new Error(`Failed to search locations: ${error.message}`);

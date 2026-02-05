@@ -16,6 +16,7 @@ const core_1 = require("@nestjs/core");
 const throttler_1 = require("@nestjs/throttler");
 const terminus_1 = require("@nestjs/terminus");
 const cache_manager_1 = require("@nestjs/cache-manager");
+const axios_1 = require("@nestjs/axios");
 const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
 const logger_module_1 = require("./common/logger/logger.module");
@@ -42,7 +43,7 @@ let SecurityHeadersMiddleware = class SecurityHeadersMiddleware {
     constructor(securityService) {
         this.securityService = securityService;
     }
-    use(req, res, next) {
+    use(_req, res, next) {
         const headers = this.securityService.getSecurityHeaders();
         Object.entries(headers).forEach(([key, value]) => {
             res.setHeader(key, value);
@@ -90,6 +91,7 @@ exports.AppModule = AppModule = __decorate([
             terminus_1.TerminusModule,
             logger_module_1.LoggerModule,
             config_module_1.ConfigurationModule,
+            axios_1.HttpModule,
             providers_module_1.ProvidersModule,
             stations_module_1.StationsModule,
             routes_module_1.RoutesModule,

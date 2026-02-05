@@ -12,9 +12,5 @@ export declare class AppController {
         status: string;
         uptime: number;
     };
-    getDepartures(): Promise<{
-        id: string;
-        train: string;
-        time: string;
-    }[]>;
+    getDepartures(): Promise<any>;
 }

@@ -11,11 +11,8 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SecurityMiddlewareService = void 0;
 const common_1 = require("@nestjs/common");
-const config_1 = require("@nestjs/config");
 let SecurityMiddlewareService = class SecurityMiddlewareService {
-    constructor(configService) {
-        this.configService = configService;
-    }
+    constructor() { }
     getCSPHeader() {
         return `
       default-src 'self';
@@ -66,6 +63,6 @@ let SecurityMiddlewareService = class SecurityMiddlewareService {
 exports.SecurityMiddlewareService = SecurityMiddlewareService;
 exports.SecurityMiddlewareService = SecurityMiddlewareService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [config_1.ConfigService])
+    __metadata("design:paramtypes", [])
 ], SecurityMiddlewareService);
 //# sourceMappingURL=security-middleware.service.js.map

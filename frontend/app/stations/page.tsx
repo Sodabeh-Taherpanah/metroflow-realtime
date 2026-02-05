@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import apiClient from '../../utils/api';
 
 const fetchStations = async () => {
-  const { data } = await apiClient.get('/stations');
+  const { data } = await apiClient.get('/vbb/stations?query=Berlin&limit=20');
   return data;
 };
 

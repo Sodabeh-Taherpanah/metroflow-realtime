@@ -23,7 +23,7 @@ let VbbService = class VbbService {
             const response = await (0, rxjs_1.lastValueFrom)(this.httpService.get(`${this.BASE_URL}/locations`, {
                 params: { query, limit },
             }));
-            return response.data?.locations || [];
+            return Array.isArray(response.data) ? response.data : [];
         }
         catch (error) {
             console.error('Error searching locations from VBB API:', error);

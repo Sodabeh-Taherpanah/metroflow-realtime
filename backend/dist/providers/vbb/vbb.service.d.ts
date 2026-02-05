@@ -1,13 +1,19 @@
 import { Provider } from '../provider.interface';
 import { HttpService } from '@nestjs/axios';
-interface VbbLocation {
+export interface VbbLocation {
+    type: string;
     id: string;
     name: string;
-    latitude?: number;
-    longitude?: number;
-    type?: string;
+    location?: {
+        type: string;
+        id: string;
+        latitude: number;
+        longitude: number;
+    };
+    products?: Record<string, boolean>;
+    stationDHID?: string;
 }
-interface VbbDeparture {
+export interface VbbDeparture {
     tripId: string;
     lineId: string;
     lineName: string;
@@ -30,4 +36,3 @@ export declare class VbbService implements Provider {
     normalizeData(data: any): any;
     private normalizeSingleItem;
 }
-export {};

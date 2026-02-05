@@ -1,7 +1,5 @@
-import { ConfigService } from '@nestjs/config';
 export declare class SecurityMiddlewareService {
-    private configService;
-    constructor(configService: ConfigService);
+    constructor();
     getCSPHeader(): string;
     getSecurityHeaders(): Record<string, string>;
     getCORSConfig(): {
