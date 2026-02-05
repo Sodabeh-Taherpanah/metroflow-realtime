@@ -1,0 +1,130 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Station entity
+model Station {
+  id        String   @id @default(cuid())
+  stationId String   @unique // External VBB/provider ID
+  name      String   @db.VarChar(255)
+  city      String   @db.VarChar(100)
+  latitude  Float
+  longitude Float
+  provider  String   @db.VarChar(50) // "VBB", "DB", etc.
+  type      String   @db.VarChar(50) // "S-Bahn", "U-Bahn", "Bus", "Train"
+  active    Boolean  @default(true)
+  
+  departures Departure[]
+  routes     Route[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([provider])
+  @@index([city])
+}
+
+// Departure entity
+model Departure {
+  id              String   @id @default(cuid())
+  departureId     String   @unique // External provider ID
+  stationId       String
+  station         Station  @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  
+  lineNumber      String   @db.VarChar(50) // "U6", "S1", "RE1"
+  direction       String   @db.VarChar(255) // Destination
+  departureTime   DateTime
+  scheduledTime   DateTime
+  delayMinutes    Int      @default(0)
+  platform        String?  @db.VarChar(10)
+  cancelled       Boolean  @default(false)
+  realtime        Boolean  @default(false)
+  
+  provider        String   @db.VarChar(50)
+  routeId         String?
+  route           Route?   @relation(fields: [routeId], references: [id])
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([stationId])
+  @@index([departureTime])
+  @@index([provider])
+}
+
+// Route entity
+model Route {
+  id              String   @id @default(cuid())
+  routeId         String   @unique // External provider ID
+  
+  lineNumber      String   @db.VarChar(50)
+  name            String   @db.VarChar(255)
+  type            String   @db.VarChar(50) // "S-Bahn", "U-Bahn", "Bus", "Train"
+  operator        String   @db.VarChar(100)
+  color           String?  @db.VarChar(7) // Hex color code
+  textColor       String?  @db.VarChar(7)
+  
+  originStationId String?
+  originStation   Station? @relation(fields: [originStationId], references: [id])
+  
+  departures      Departure[]
+  
+  provider        String   @db.VarChar(50)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([provider])
+  @@index([lineNumber])
+}
+
+// Cache entity for real-time data
+model RealtimeCache {
+  id              String   @id @default(cuid())
+  key             String   @unique
+  value           Json
+  expiresAt       DateTime
+  provider        String   @db.VarChar(50)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([expiresAt])
+  @@index([provider])
+}
+
+// Monitoring/Analytics
+model Analytics {
+  id              String   @id @default(cuid())
+  event           String   @db.VarChar(100)
+  action          String   @db.VarChar(100)
+  userId          String?  @db.VarChar(255)
+  stationId       String?
+  metadata        Json?
+  
+  createdAt       DateTime @default(now())
+  
+  @@index([event])
+  @@index([createdAt])
+}
+
+// Error logs
+model ErrorLog {
+  id              String   @id @default(cuid())
+  message         String   @db.Text
+  stack           String?  @db.Text
+  provider        String?  @db.VarChar(50)
+  endpoint        String?  @db.VarChar(255)
+  statusCode      Int?
+  userId          String?  @db.VarChar(255)
+  
+  createdAt       DateTime @default(now())
+  
+  @@index([provider])
+  @@index([createdAt])
+}
