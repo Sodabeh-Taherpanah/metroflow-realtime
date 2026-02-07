@@ -158,15 +158,15 @@ jobs:
       - name: Deploy to Vercel (Frontend)
         working-directory: ./frontend
         env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_METROFLOW }}
+          VERCEL_TOKEN_METROFLOW: ${{ secrets.VERCEL_TOKEN_METROFLOW }}
         run: |
           npm install -g vercel
-          vercel deploy --prod --token=$VERCEL_TOKEN
+          vercel deploy --prod --token=$VERCEL_TOKEN_METROFLOW --yes
 
       - name: Deploy to Vercel (Backend)
         working-directory: ./backend
         env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_METROFLOW }}
+          VERCEL_TOKEN_METROFLOW: ${{ secrets.VERCEL_TOKEN_METROFLOW }}
         run: |
           npm install -g vercel
-          vercel deploy --prod --token=$VERCEL_TOKEN
+          vercel deploy --prod --token=$VERCEL_TOKEN_METROFLOW --yes
