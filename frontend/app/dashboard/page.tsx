@@ -10,7 +10,14 @@ const fetchProviderStatus = async () => {
 };
 
 const ProviderStatusDashboard = () => {
-  const { data: statuses, isLoading, error } = useQuery('providerStatus', fetchProviderStatus);
+  const {
+    data: statuses,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ['providerStatus'],
+    queryFn: fetchProviderStatus,
+  });
 
   if (isLoading) return <p>Loading provider statuses...</p>;
   if (error) return <p>Error loading provider statuses.</p>;
