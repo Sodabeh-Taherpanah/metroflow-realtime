@@ -31,18 +31,20 @@ test.describe('MetroFlow E2E Tests', () => {
   });
 
   test('should navigate to stations page', async ({ page }, testInfo) => {
-    const isMobile = testInfo.project.name.includes('Mobile');
-    test.skip(isMobile, 'Nav links hidden on mobile');
+    test.skip(testInfo.project.name.includes('Mobile'), 'Nav links hidden on mobile');
     await page.goto('/');
-    await page.click('a:has-text("Stations")');
+    const stationsLink = page.locator('a:has-text("Stations")');
+    await stationsLink.waitFor({ state: 'visible', timeout: 5000 });
+    await stationsLink.click();
     await expect(page).toHaveURL(/\/stations/);
   });
 
   test('should navigate to departures page', async ({ page }, testInfo) => {
-    const isMobile = testInfo.project.name.includes('Mobile');
-    test.skip(isMobile, 'Nav links hidden on mobile');
+    test.skip(testInfo.project.name.includes('Mobile'), 'Nav links hidden on mobile');
     await page.goto('/');
-    await page.click('a:has-text("Departures")');
+    const departuresLink = page.locator('a:has-text("Departures")');
+    await departuresLink.waitFor({ state: 'visible', timeout: 5000 });
+    await departuresLink.click();
     await expect(page).toHaveURL(/\/departures/);
   });
 
