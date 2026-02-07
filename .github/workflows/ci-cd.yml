@@ -68,6 +68,14 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
+      - name: Verify lock file exists (Frontend)
+        working-directory: ./frontend
+        run: test -f package-lock.json || echo "Lock file missing in frontend"
+
+      - name: Verify lock file exists (Backend)
+        working-directory: ./backend
+        run: test -f package-lock.json || echo "Lock file missing in backend"
+
       - name: Install backend dependencies
         working-directory: ./backend
         run: npm ci
