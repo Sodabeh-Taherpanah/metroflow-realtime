@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useTheme } from '@/providers';
 
 export default function Header() {
-  const { isDark, setTheme, theme } = useTheme();
+  const { isDark, setTheme } = useTheme();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-black">

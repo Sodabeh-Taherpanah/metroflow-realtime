@@ -1,14 +1,6 @@
-'use client';
-
 import React from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import apiClient from '../../../utils/api';
-
-const fetchStationDetail = async (id: string) => {
-  const { data } = await apiClient.get(`/stations/${id}`);
-  return data;
-};
 
 const StationDetail = ({ params }: { params: { id: string } }) => {
   const fetchStationDetail = async (id: string) => {

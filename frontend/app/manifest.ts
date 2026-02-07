@@ -1,7 +1,5 @@
 import { MetadataRoute } from 'next';
 
-const baseUrl = 'https://metroflow.vercel.app';
-
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'MetroFlow - Real-time Transit Intelligence',
@@ -36,21 +34,6 @@ export default function manifest(): MetadataRoute.Manifest {
         sizes: '192x192',
         type: 'image/png',
         purpose: 'maskable',
-      },
-    ],
-    categories: ['travel', 'transportation'],
-    screenshots: [
-      {
-        src: '/screenshot-540.png',
-        sizes: '540x720',
-        type: 'image/png',
-        form_factor: 'narrow',
-      },
-      {
-        src: '/screenshot-1280.png',
-        sizes: '1280x720',
-        type: 'image/png',
-        form_factor: 'wide',
       },
     ],
   };

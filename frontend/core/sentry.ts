@@ -6,7 +6,7 @@ export function initSentry() {
       dsn: process.env.NEXT_PUBLIC_SENTRY_AUTH_TOKEN,
       environment: process.env.NODE_ENV,
       tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
-      beforeSend(event, hint) {
+      beforeSend(event) {
         // Filter out certain errors in development
         if (process.env.NODE_ENV === 'development') {
           return null;

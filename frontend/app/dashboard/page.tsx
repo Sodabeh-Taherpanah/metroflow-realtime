@@ -19,7 +19,7 @@ const ProviderStatusDashboard = () => {
     <div>
       <h1>Provider Status Dashboard</h1>
       <ul>
-        {statuses.map((status: any) => (
+        {statuses.map((status: { id: string; name: string; isOnline: boolean }) => (
           <li key={status.id}>
             {status.name}: {status.isOnline ? 'Online' : 'Offline'}
           </li>

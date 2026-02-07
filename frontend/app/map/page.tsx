@@ -20,11 +20,16 @@ type UserLocation = {
 
 const MapView = () => {
   const [isMounted, setIsMounted] = useState(false);
-  const [MapContainer, setMapContainer] = useState<any>(null);
-  const [TileLayer, setTileLayer] = useState<any>(null);
-  const [Marker, setMarker] = useState<any>(null);
-  const [Popup, setPopup] = useState<any>(null);
-  const [Polyline, setPolyline] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [MapContainer, setMapContainer] = useState<React.ComponentType<any> | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [TileLayer, setTileLayer] = useState<React.ComponentType<any> | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [Marker, setMarker] = useState<React.ComponentType<any> | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [Popup, setPopup] = useState<React.ComponentType<any> | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [Polyline, setPolyline] = useState<React.ComponentType<any> | null>(null);
   const [stations, setStations] = useState<Station[]>([]);
   const [isLoadingStations, setIsLoadingStations] = useState(false);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
@@ -35,7 +40,7 @@ const MapView = () => {
   const [suggestions, setSuggestions] = useState<Station[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const mapRef = useRef<any>(null);
+  const mapRef = useRef<L.Map | null>(null); // Update the type of mapRef to L.Map
 
   useEffect(() => {
     (async () => {
@@ -47,11 +52,16 @@ const MapView = () => {
           shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
         });
         const mod = await import('react-leaflet');
-        setMapContainer(() => mod.MapContainer);
-        setTileLayer(() => mod.TileLayer);
-        setMarker(() => mod.Marker);
-        setPopup(() => mod.Popup);
-        setPolyline(() => mod.Polyline);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setMapContainer(() => mod.MapContainer as any);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setTileLayer(() => mod.TileLayer as any);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setMarker(() => mod.Marker as any);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setPopup(() => mod.Popup as any);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setPolyline(() => mod.Polyline as any);
         setIsMounted(true);
       } catch (error) {
         console.error('Failed to load react-leaflet:', error);
@@ -140,12 +150,8 @@ const MapView = () => {
       const items = Array.isArray(data) ? data : [];
       setStations(items);
 
-      const stationMarkers = stations.filter(
-        (station: Station) => station.location?.latitude && station.location?.longitude
-      );
-
       if (station.location) {
-        if (mapRef.current) {
+        if (mapRef.current && mapRef.current.setView) {
           mapRef.current.setView([station.location.latitude, station.location.longitude], 13);
         }
       }
@@ -176,7 +182,7 @@ const MapView = () => {
         setIsLocating(false);
         loadNearbyStations(location);
 
-        if (mapRef.current) {
+        if (mapRef.current && mapRef.current.setView) {
           mapRef.current.setView([location.latitude, location.longitude], 13);
         }
       },
@@ -203,7 +209,7 @@ const MapView = () => {
             longitude: s.location!.longitude,
           }),
         }))
-        .sort((a: any, b: any) => a.distance - b.distance);
+        .sort((a, b) => a.distance - b.distance);
 
       setStations(stationsWithDistance);
     } catch (error) {
@@ -228,13 +234,9 @@ const MapView = () => {
       const items = Array.isArray(data) ? data : [];
       setStations(items);
 
-      const stationMarkers = stations.filter(
-        (station: Station) => station.location?.latitude && station.location?.longitude
-      );
-
       if (items.length > 0 && items[0].location) {
         const firstStation = items[0];
-        if (mapRef.current) {
+        if (mapRef.current && mapRef.current.setView) {
           mapRef.current.setView(
             [firstStation.location.latitude, firstStation.location.longitude],
             13
@@ -423,20 +425,21 @@ const MapView = () => {
               No stations found. Try searching or locating yourself.
             </div>
           )}
-          {stationMarkers.map((station: any) => {
-            const distanceKm = userLocation
-              ? getDistanceKm(userLocation, {
-                  latitude: station.location.latitude,
-                  longitude: station.location.longitude,
-                })
-              : null;
+          {stationMarkers.map((station: Station) => {
+            const distanceKm =
+              userLocation && station.location
+                ? getDistanceKm(userLocation, {
+                    latitude: station.location.latitude,
+                    longitude: station.location.longitude,
+                  })
+                : null;
 
             return (
               <div
                 key={station.id}
                 onClick={() => {
                   setSelectedStation(station);
-                  if (mapRef.current && station.location) {
+                  if (mapRef.current && mapRef.current.setView && station.location) {
                     mapRef.current.setView(
                       [station.location.latitude, station.location.longitude],
                       15
@@ -469,56 +472,49 @@ const MapView = () => {
         </div>
       </div>
 
-      <MapContainer center={center} zoom={12} style={{ flex: 1, height: '100%' }} ref={mapRef}>
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
-        />
-
-        {userLocation && (
-          <Marker position={[userLocation.latitude, userLocation.longitude]}>
-            <Popup>
-              <strong>Your Location</strong>
-              <div style={{ fontSize: 12 }}>
-                {userLocation.latitude.toFixed(5)}, {userLocation.longitude.toFixed(5)}
-              </div>
-            </Popup>
-          </Marker>
-        )}
-
-        {stationMarkers.map((station: any) => (
-          <Marker
-            key={station.id}
-            position={[station.location.latitude, station.location.longitude]}
-          >
-            <Popup>
-              <strong>{station.name}</strong>
-              {userLocation && (
-                <div style={{ fontSize: 12, marginTop: 4 }}>
-                  Distance:{' '}
-                  {getDistanceKm(userLocation, {
-                    latitude: station.location.latitude,
-                    longitude: station.location.longitude,
-                  }).toFixed(2)}{' '}
-                  km
-                </div>
-              )}
-            </Popup>
-          </Marker>
-        ))}
-
-        {userLocation && selectedStation?.location && (
-          <Polyline
-            positions={[
-              [userLocation.latitude, userLocation.longitude],
-              [selectedStation.location.latitude, selectedStation.location.longitude],
-            ]}
-            color="#ef4444"
-            weight={3}
-            opacity={0.7}
+      {MapContainer && TileLayer && Marker && Popup && (
+        <MapContainer center={center} zoom={12} style={{ flex: 1, height: '100%' }} ref={mapRef}>
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
           />
-        )}
-      </MapContainer>
+
+          {userLocation && (
+            <Marker position={[userLocation.latitude, userLocation.longitude]}>
+              <Popup>
+                <strong>Your Location</strong>
+                <div style={{ fontSize: 12 }}>
+                  {userLocation.latitude.toFixed(5)}, {userLocation.longitude.toFixed(5)}
+                </div>
+              </Popup>
+            </Marker>
+          )}
+
+          {stationMarkers.map(
+            (station: Station) =>
+              station.location && (
+                <Marker
+                  key={station.id}
+                  position={[station.location.latitude, station.location.longitude]}
+                >
+                  <Popup>
+                    <strong>{station.name}</strong>
+                    {userLocation && (
+                      <div style={{ fontSize: 12, marginTop: 4 }}>
+                        Distance:{' '}
+                        {getDistanceKm(userLocation, {
+                          latitude: station.location.latitude,
+                          longitude: station.location.longitude,
+                        }).toFixed(2)}{' '}
+                        km
+                      </div>
+                    )}
+                  </Popup>
+                </Marker>
+              )
+          )}
+        </MapContainer>
+      )}
     </div>
   );
 };

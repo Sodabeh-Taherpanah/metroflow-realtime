@@ -17,18 +17,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [isDark, setIsDark] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-    const saved = (localStorage.getItem('theme') as Theme) || 'system';
-    setTheme(saved);
-    updateTheme(saved);
-  }, []);
-
   const updateTheme = (newTheme: Theme) => {
     const isDarkMode =
       newTheme === 'dark' ||
-      (newTheme === 'system' &&
-        window.matchMedia('(prefers-color-scheme: dark)').matches);
+      (newTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
@@ -38,6 +30,21 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     setIsDark(isDarkMode);
   };
+
+  useEffect(() => {
+    const saved = (localStorage.getItem('theme') as Theme) || 'system';
+
+    // Set initial state from localStorage
+    const initializeTheme = () => {
+      setTheme(saved);
+      updateTheme(saved);
+
+      // Delay setting mounted to avoid cascading renders
+      setTimeout(() => setMounted(true), 0);
+    };
+
+    initializeTheme();
+  }, []);
 
   const handleSetTheme = (newTheme: Theme) => {
     setTheme(newTheme);

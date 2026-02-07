@@ -18,7 +18,7 @@ export function middleware(req: NextRequest) {
 
   // Rate limiting by IP
   try {
-    const ip = req.ip || req.headers.get('x-forwarded-for') || 'unknown';
+    const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
     const now = Date.now();
     const entry = ipMap.get(ip) || { count: 0, start: now };
     if (now - entry.start > RATE_WINDOW) {
@@ -31,7 +31,7 @@ export function middleware(req: NextRequest) {
     if (entry.count > RATE_LIMIT) {
       return new NextResponse('Too Many Requests', { status: 429 });
     }
-  } catch (err) {
+  } catch {
     // best effort
   }
 
