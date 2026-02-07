@@ -1,8 +1,21 @@
-import { MetadataRoute } from 'next';
+import { Metadata, MetadataRoute } from 'next';
 
 const baseUrl = 'https://metroflow.vercel.app';
 
-export default function jsonLd(): MetadataRoute.JsonLd {
+interface JsonLd {
+  '@context': string;
+  '@type': string;
+  name: string;
+  description?: string;
+  url?: string;
+  publisher?: {
+    '@type': string;
+    name: string;
+    logo?: { '@type': string; url: string };
+  };
+  [key: string]: any; // for other JSON-LD fields
+}
+export default function jsonLd(): JsonLd {
   return {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
