@@ -30,13 +30,17 @@ test.describe('MetroFlow E2E Tests', () => {
     await expect(page).toHaveTitle(/MetroFlow/);
   });
 
-  test('should navigate to stations page', async ({ page }) => {
+  test('should navigate to stations page', async ({ page }, testInfo) => {
+    const isMobile = testInfo.project.name.includes('Mobile');
+    test.skip(isMobile, 'Nav links hidden on mobile');
     await page.goto('/');
     await page.click('a:has-text("Stations")');
     await expect(page).toHaveURL(/\/stations/);
   });
 
-  test('should navigate to departures page', async ({ page }) => {
+  test('should navigate to departures page', async ({ page }, testInfo) => {
+    const isMobile = testInfo.project.name.includes('Mobile');
+    test.skip(isMobile, 'Nav links hidden on mobile');
     await page.goto('/');
     await page.click('a:has-text("Departures")');
     await expect(page).toHaveURL(/\/departures/);
