@@ -96,11 +96,12 @@ test.describe('Map Page E2E Tests', () => {
     const firstStation = page.locator('div[style*="padding: 12"]').first();
     await firstStation.click();
 
-    // Verify it's selected (blue background)
-    await expect(firstStation).toHaveCSS('background-color', /rgb.*219.*238.*254|#dbeafe/);
+    // Verify it's selected (blue border)
+    await expect(firstStation).toHaveCSS('border-top-color', 'rgb(59, 130, 246)');
+    await expect(firstStation).toHaveCSS('border-top-width', '2px');
   });
 
-  test('should display red track line when station selected', async ({ page }) => {
+  test('should show distance after locating and selecting station', async ({ page }) => {
     // Enable geolocation mock
     await page.context().addInitScript(() => {
       navigator.geolocation.getCurrentPosition = callback => {
@@ -130,8 +131,8 @@ test.describe('Map Page E2E Tests', () => {
     const firstStation = page.locator('div[style*="padding: 12"]').nth(0);
     await firstStation.click();
 
-    // Check if polyline (track line) is rendered
-    const polyline = page.locator('polyline');
-    await expect(polyline).toBeVisible();
+    // Check distance text appears after selecting a station
+    const distanceText = page.locator('text=/km away/i').first();
+    await expect(distanceText).toBeVisible();
   });
 });
