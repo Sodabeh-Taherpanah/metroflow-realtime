@@ -1,5 +1,3 @@
-import { Metadata, MetadataRoute } from 'next';
-
 const baseUrl = 'https://metroflow.vercel.app';
 
 interface JsonLd {
@@ -13,6 +11,7 @@ interface JsonLd {
     name: string;
     logo?: { '@type': string; url: string };
   };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any; // for other JSON-LD fields
 }
 export default function jsonLd(): JsonLd {
