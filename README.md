@@ -67,6 +67,37 @@ project/
 └── README.md
 ```
 
+## Architecture
+
+### System Overview
+
+```mermaid
+flowchart LR
+	User((User)) --> Web[Next.js Frontend]
+	Web -->|REST| API[NestJS Backend]
+	Web -->|WebSocket| API
+	API --> DB[(PostgreSQL)]
+	API --> Cache[(Redis)]
+	API --> Ext[External Transit APIs]
+```
+
+### CI/CD Flow
+
+```mermaid
+sequenceDiagram
+	participant Dev as Developer
+	participant GH as GitHub
+	participant CI as GitHub Actions
+	participant Vercel as Vercel
+	participant Server as Backend Host
+
+	Dev->>GH: Push / PR
+	GH->>CI: Trigger workflow
+	CI->>CI: Lint + Test + Build
+	CI->>Vercel: Deploy Frontend (main)
+	CI->>Server: Deploy Backend (main)
+```
+
 ## Getting Started
 
 ### Prerequisites
@@ -158,6 +189,20 @@ vercel deploy
 - Connect GitHub repository
 - Set environment variables
 - Deploy
+
+## Versioning Strategy
+
+We use **Semantic Versioning (SemVer)**: $MAJOR.MINOR.PATCH$.
+
+- **MAJOR**: breaking changes
+- **MINOR**: new features (backwards compatible)
+- **PATCH**: bug fixes and small improvements
+
+Recommended release flow:
+
+1. Merge to `main` via PR
+2. Create a git tag like `v1.2.3`
+3. Publish release notes
 
 ## Contributing
 
