@@ -17,9 +17,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set correct working directory
-        run: mv metroflow metroflow-realtime
-
       - name: Install frontend dependencies
         working-directory: ./metroflow-realtime/frontend
         run: npm ci
@@ -58,9 +55,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set correct working directory
-        run: mv metroflow metroflow-realtime
 
       - name: Install backend dependencies
         working-directory: ./metroflow-realtime/backend
@@ -104,9 +98,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set correct working directory
-        run: mv metroflow metroflow-realtime
-
       - name: Build backend
         working-directory: ./metroflow-realtime/backend
         run: npm run build --if-present
@@ -123,9 +114,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set correct working directory
-        run: mv metroflow metroflow-realtime
 
       - name: Deploy to Vercel (Frontend)
         working-directory: ./metroflow-realtime/frontend
