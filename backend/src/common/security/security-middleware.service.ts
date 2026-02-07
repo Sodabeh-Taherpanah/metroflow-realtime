@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable } from "@nestjs/common";
 
 @Injectable()
 export class SecurityMiddlewareService {
@@ -19,8 +19,8 @@ export class SecurityMiddlewareService {
       base-uri 'self';
       form-action 'self';
     `
-      .replace(/\n/g, ' ')
-      .replace(/\s+/g, ' ');
+      .replace(/\n/g, " ")
+      .replace(/\s+/g, " ");
   }
 
   /**
@@ -28,14 +28,14 @@ export class SecurityMiddlewareService {
    */
   getSecurityHeaders(): Record<string, string> {
     return {
-      'Content-Security-Policy': this.getCSPHeader(),
-      'X-Content-Type-Options': 'nosniff',
-      'X-Frame-Options': 'DENY',
-      'X-XSS-Protection': '1; mode=block',
-      'Referrer-Policy': 'strict-origin-when-cross-origin',
-      'Permissions-Policy': 'geolocation=(), microphone=(), camera=()',
-      'Strict-Transport-Security':
-        'max-age=31536000; includeSubDomains; preload',
+      "Content-Security-Policy": this.getCSPHeader(),
+      "X-Content-Type-Options": "nosniff",
+      "X-Frame-Options": "DENY",
+      "X-XSS-Protection": "1; mode=block",
+      "Referrer-Policy": "strict-origin-when-cross-origin",
+      "Permissions-Policy": "geolocation=(), microphone=(), camera=()",
+      "Strict-Transport-Security":
+        "max-age=31536000; includeSubDomains; preload",
     };
   }
 
@@ -44,8 +44,8 @@ export class SecurityMiddlewareService {
    */
   getCORSConfig() {
     const allowedOrigins = [
-      'http://localhost:3000',
-      'http://localhost:3001',
+      "http://localhost:3000",
+      "http://localhost:3001",
       process.env.FRONTEND_URL,
       process.env.PRODUCTION_URL,
     ].filter(Boolean);
@@ -53,13 +53,13 @@ export class SecurityMiddlewareService {
     return {
       origin: allowedOrigins,
       credentials: true,
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
       allowedHeaders: [
-        'Content-Type',
-        'Authorization',
-        'Accept',
-        'Origin',
-        'X-Requested-With',
+        "Content-Type",
+        "Authorization",
+        "Accept",
+        "Origin",
+        "X-Requested-With",
       ],
     };
   }

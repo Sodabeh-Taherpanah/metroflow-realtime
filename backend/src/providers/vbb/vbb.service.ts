@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { Provider } from '../provider.interface';
-import { HttpService } from '@nestjs/axios';
-import { lastValueFrom } from 'rxjs';
+import { Injectable } from "@nestjs/common";
+import { Provider } from "../provider.interface";
+import { HttpService } from "@nestjs/axios";
+import { lastValueFrom } from "rxjs";
 
 export interface VbbLocation {
   type: string;
@@ -31,7 +31,7 @@ export interface VbbDeparture {
 
 @Injectable()
 export class VbbService implements Provider {
-  private readonly BASE_URL = 'https://v6.vbb.transport.rest';
+  private readonly BASE_URL = "https://v6.vbb.transport.rest";
 
   constructor(private readonly httpService: HttpService) {}
 
@@ -51,7 +51,7 @@ export class VbbService implements Provider {
       // VBB API returns array directly, not wrapped in locations object
       return Array.isArray(response.data) ? response.data : [];
     } catch (error) {
-      console.error('Error searching locations from VBB API:', error);
+      console.error("Error searching locations from VBB API:", error);
       throw new Error(`Failed to search locations: ${error.message}`);
     }
   }
@@ -71,7 +71,7 @@ export class VbbService implements Provider {
       );
       return response.data?.departures || [];
     } catch (error) {
-      console.error('Error fetching departures from VBB API:', error);
+      console.error("Error fetching departures from VBB API:", error);
       throw new Error(`Failed to fetch departures: ${error.message}`);
     }
   }
@@ -86,7 +86,7 @@ export class VbbService implements Provider {
       );
       return response.data || null;
     } catch (error) {
-      console.error('Error fetching station from VBB API:', error);
+      console.error("Error fetching station from VBB API:", error);
       throw new Error(`Failed to fetch station: ${error.message}`);
     }
   }
@@ -103,7 +103,7 @@ export class VbbService implements Provider {
       );
       return response.data || null;
     } catch (error) {
-      console.error('Error fetching journey from VBB API:', error);
+      console.error("Error fetching journey from VBB API:", error);
       throw new Error(`Failed to fetch journey: ${error.message}`);
     }
   }
@@ -114,8 +114,8 @@ export class VbbService implements Provider {
       const response = await lastValueFrom(this.httpService.get(this.BASE_URL));
       return response.data;
     } catch (error) {
-      console.error('Error fetching VBB API info:', error);
-      throw new Error('Failed to fetch VBB API info');
+      console.error("Error fetching VBB API info:", error);
+      throw new Error("Failed to fetch VBB API info");
     }
   }
 
@@ -134,7 +134,7 @@ export class VbbService implements Provider {
       latitude: item.latitude,
       longitude: item.longitude,
       type: item.type,
-      provider: 'VBB',
+      provider: "VBB",
     };
   }
 }

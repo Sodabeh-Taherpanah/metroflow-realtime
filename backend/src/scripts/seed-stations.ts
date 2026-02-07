@@ -1,18 +1,18 @@
-import 'reflect-metadata';
-import { DataSource } from 'typeorm';
-import * as dotenv from 'dotenv';
-import { Station } from '../entities/station.entity';
+import "reflect-metadata";
+import { DataSource } from "typeorm";
+import * as dotenv from "dotenv";
+import { Station } from "../entities/station.entity";
 
-dotenv.config({ path: __dirname + '/../../.env' });
+dotenv.config({ path: __dirname + "/../../.env" });
 
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) {
-  console.error('DATABASE_URL not set in .env');
+  console.error("DATABASE_URL not set in .env");
   process.exit(1);
 }
 
 const AppDataSource = new DataSource({
-  type: 'postgres',
+  type: "postgres",
   url: DATABASE_URL,
   entities: [Station],
   synchronize: false,
@@ -20,13 +20,13 @@ const AppDataSource = new DataSource({
 
 async function seed() {
   await AppDataSource.initialize();
-  console.log('Connected to DB');
+  console.log("Connected to DB");
   const repo = AppDataSource.getRepository(Station);
 
   const samples: Partial<Station>[] = [
-    { name: 'Central Station', location: '52.5200,13.4050' },
-    { name: 'North Station', location: '52.5300,13.4050' },
-    { name: 'East Station', location: '52.5200,13.4150' },
+    { name: "Central Station", location: "52.5200,13.4050" },
+    { name: "North Station", location: "52.5300,13.4050" },
+    { name: "East Station", location: "52.5200,13.4150" },
   ];
 
   for (const s of samples) {
@@ -34,9 +34,9 @@ async function seed() {
     if (!exists) {
       const created = repo.create(s as Station);
       await repo.save(created);
-      console.log('Inserted', (created as Station).name);
+      console.log("Inserted", (created as Station).name);
     } else {
-      console.log('Already exists', s.name);
+      console.log("Already exists", s.name);
     }
   }
 
@@ -48,6 +48,6 @@ async function seed() {
 seed()
   .then(() => process.exit(0))
   .catch((err) => {
-    console.error('Seed failed', err);
+    console.error("Seed failed", err);
     process.exit(1);
   });

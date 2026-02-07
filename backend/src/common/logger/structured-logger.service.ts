@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from "@nestjs/common";
 
 export interface LogContext {
   userId?: string;
@@ -9,7 +9,7 @@ export interface LogContext {
 
 @Injectable()
 export class StructuredLogger {
-  private logger = new Logger('App');
+  private logger = new Logger("App");
 
   log(message: string, context?: LogContext) {
     this.logger.log(this.formatMessage(message, context));
@@ -39,7 +39,7 @@ export class StructuredLogger {
         parts.push(`[Meta: ${JSON.stringify(context.metadata)}]`);
     }
 
-    return parts.join(' ');
+    return parts.join(" ");
   }
 
   /**
@@ -75,7 +75,7 @@ export class StructuredLogger {
     duration: number,
     success: boolean,
   ) {
-    const status = success ? 'Success' : 'Failed';
+    const status = success ? "Success" : "Failed";
     this.log(
       `Database: ${operation} ${entity} - Status: ${status} - Duration: ${duration}ms`,
     );
@@ -90,7 +90,7 @@ export class StructuredLogger {
     hit: boolean,
     duration: number,
   ) {
-    const cacheStatus = hit ? 'Hit' : 'Miss';
+    const cacheStatus = hit ? "Hit" : "Miss";
     this.log(
       `Cache: ${operation} ${key} - ${cacheStatus} - Duration: ${duration}ms`,
     );

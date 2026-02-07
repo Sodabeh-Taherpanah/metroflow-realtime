@@ -1,25 +1,25 @@
-import { NestFactory } from '@nestjs/core';
-import { IoAdapter } from '@nestjs/platform-socket.io';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { ValidationPipe } from '@nestjs/common';
-import { AppModule } from './app.module';
-import helmet from 'helmet';
-import type { Request, Response, NextFunction } from 'express';
+import { NestFactory } from "@nestjs/core";
+import { IoAdapter } from "@nestjs/platform-socket.io";
+import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
+import { ValidationPipe } from "@nestjs/common";
+import { AppModule } from "./app.module";
+import helmet from "helmet";
+import type { Request, Response, NextFunction } from "express";
 
 async function bootstrap() {
-  console.log('🚀 Starting NestJS application...');
+  console.log("🚀 Starting NestJS application...");
 
   // Initialize Sentry if DSN provided (guarded)
   try {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const Sentry = require('@sentry/node');
+    const Sentry = require("@sentry/node");
     if (process.env.SENTRY_DSN) {
       Sentry.init({
         dsn: process.env.SENTRY_DSN,
         environment: process.env.NODE_ENV,
-        tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+        tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
       });
-      console.log('✅ Sentry initialized');
+      console.log("✅ Sentry initialized");
     }
   } catch (err) {
     // package might not be installed — skip
@@ -32,18 +32,18 @@ async function bootstrap() {
   // Ensure socket.io adapter is set
   try {
     app.useWebSocketAdapter(new IoAdapter(app));
-    console.log('✅ WebSocket IoAdapter set');
+    console.log("✅ WebSocket IoAdapter set");
   } catch (err) {
-    console.warn('⚠️ IoAdapter not available yet:', err?.message || err);
+    console.warn("⚠️ IoAdapter not available yet:", err?.message || err);
   }
 
-  console.log('✅ NestFactory created', process.env.DATABASE_URL);
+  console.log("✅ NestFactory created", process.env.DATABASE_URL);
 
   // Security: helmet with stricter CSP and frameguard
   try {
     app.use(
       helmet({
-        crossOriginResourcePolicy: { policy: 'same-origin' },
+        crossOriginResourcePolicy: { policy: "same-origin" },
       }),
     );
 
@@ -59,21 +59,21 @@ async function bootstrap() {
         "connect-src 'self' ws: wss:",
         "object-src 'none'",
         "frame-ancestors 'none'",
-      ].join('; ');
-      res.setHeader('Content-Security-Policy', csp);
+      ].join("; ");
+      res.setHeader("Content-Security-Policy", csp);
       next();
     });
   } catch (err) {
     console.warn(
-      '⚠️ Helmet not configured (missing package?):',
+      "⚠️ Helmet not configured (missing package?):",
       err?.message || err,
     );
   }
 
   // Basic HTTPS enforcement when running behind a proxy/load balancer
   app.use((req: Request, res: Response, next: NextFunction) => {
-    const proto = (req.headers['x-forwarded-proto'] as string) || req.protocol;
-    if (process.env.ENFORCE_HTTPS === 'true' && proto && proto !== 'https') {
+    const proto = (req.headers["x-forwarded-proto"] as string) || req.protocol;
+    if (process.env.ENFORCE_HTTPS === "true" && proto && proto !== "https") {
       const host = req.headers.host;
       return res.redirect(301, `https://${host}${req.originalUrl}`);
     }
@@ -82,7 +82,7 @@ async function bootstrap() {
 
   // CORS
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: process.env.FRONTEND_URL || "http://localhost:3000",
     credentials: true,
   });
 
@@ -90,13 +90,13 @@ async function bootstrap() {
   // Sanitization middleware: lightweight removal of <script> tags (best-effort)
   app.use((req: Request, _res: Response, next: NextFunction) => {
     try {
-      if (req.body && typeof req.body === 'object') {
+      if (req.body && typeof req.body === "object") {
         const sanitize = (obj: any) => {
           for (const k of Object.keys(obj)) {
             const v = obj[k];
-            if (typeof v === 'string') {
-              obj[k] = v.replace(/<script.*?>.*?<\/script>/gi, '');
-            } else if (v && typeof v === 'object') {
+            if (typeof v === "string") {
+              obj[k] = v.replace(/<script.*?>.*?<\/script>/gi, "");
+            } else if (v && typeof v === "object") {
               sanitize(v);
             }
           }
@@ -119,18 +119,18 @@ async function bootstrap() {
 
   // Swagger
   const config = new DocumentBuilder()
-    .setTitle('MetroFlow API')
-    .setDescription('Real-time transport intelligence platform API')
-    .setVersion('1.0')
+    .setTitle("MetroFlow API")
+    .setDescription("Real-time transport intelligence platform API")
+    .setVersion("1.0")
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  SwaggerModule.setup("api/docs", app, document);
 
   // Basic metrics endpoint if prom-client present (guarded)
   try {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const promClient = require('prom-client');
+    const promClient = require("prom-client");
     const collectDefault = promClient.collectDefaultMetrics;
     collectDefault();
     // Register on underlying Express instance
@@ -138,9 +138,9 @@ async function bootstrap() {
       app.getHttpAdapter &&
       app.getHttpAdapter().getInstance &&
       app.getHttpAdapter().getInstance();
-    if (server && typeof server.get === 'function') {
-      server.get('/metrics', (_req: Request, res: Response) => {
-        res.set('Content-Type', promClient.register.contentType);
+    if (server && typeof server.get === "function") {
+      server.get("/metrics", (_req: Request, res: Response) => {
+        res.set("Content-Type", promClient.register.contentType);
         res.send(promClient.register.metrics());
       });
     }
@@ -158,11 +158,11 @@ async function bootstrap() {
       `📚 Swagger docs available at: http://localhost:${port}/api/docs`,
     );
   } catch (error) {
-    console.error('❌ Failed to start server:', error);
+    console.error("❌ Failed to start server:", error);
     throw error;
   }
 }
 
 bootstrap()
-  .then(() => console.log('✅ Bootstrap completed'))
-  .catch((err) => console.error('❌ Bootstrap error:', err));
+  .then(() => console.log("✅ Bootstrap completed"))
+  .catch((err) => console.error("❌ Bootstrap error:", err));

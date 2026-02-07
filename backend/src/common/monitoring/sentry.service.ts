@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import * as Sentry from '@sentry/node';
+import { Injectable } from "@nestjs/common";
+import * as Sentry from "@sentry/node";
 
 @Injectable()
 export class SentryService {
@@ -12,7 +12,7 @@ export class SentryService {
       Sentry.init({
         dsn: process.env.SENTRY_DSN,
         environment: process.env.NODE_ENV,
-        tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+        tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
         integrations: [],
       });
     }
@@ -28,7 +28,7 @@ export class SentryService {
 
   captureMessage(
     message: string,
-    level: 'fatal' | 'error' | 'warning' | 'info' = 'info',
+    level: "fatal" | "error" | "warning" | "info" = "info",
   ) {
     if (process.env.SENTRY_DSN) {
       Sentry.captureMessage(message, level);
@@ -53,7 +53,7 @@ export class SentryService {
   addBreadcrumb(
     message: string,
     category: string,
-    level: 'fatal' | 'error' | 'warning' | 'info' = 'info',
+    level: "fatal" | "error" | "warning" | "info" = "info",
     data?: Record<string, any>,
   ) {
     if (process.env.SENTRY_DSN) {
