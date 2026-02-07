@@ -158,4 +158,3 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H $DEPLOY_HOST >> ~/.ssh/known_hosts
           ssh -i ~/.ssh/deploy_key $DEPLOY_USER@$DEPLOY_HOST "cd /app && git pull && npm run build && pm2 restart metroflow-backend"
-        uses: dependabot/fetch-metadata@v1
