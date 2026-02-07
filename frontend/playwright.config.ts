@@ -11,6 +11,8 @@ export default defineConfig({
     baseURL: 'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    // Mock API calls by default
+    ignoreHTTPSErrors: true,
   },
 
   projects: [

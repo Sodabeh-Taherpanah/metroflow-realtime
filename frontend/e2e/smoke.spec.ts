@@ -1,6 +1,30 @@
 import { test, expect } from '@playwright/test';
 
+const mockStations = [
+  { id: '1', name: 'Berlin Hauptbahnhof', location: { latitude: 52.525, longitude: 13.369 } },
+];
+
 test.describe('MetroFlow E2E Tests', () => {
+  test.beforeEach(async ({ page }) => {
+    // Mock API calls to avoid backend dependency
+    await page.route('**/api/**', async route => {
+      const url = route.request().url();
+      if (url.includes('/vbb/stations')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(mockStations),
+        });
+      } else {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify([]),
+        });
+      }
+    });
+  });
+
   test('should load homepage', async ({ page }) => {
     await page.goto('/');
     await expect(page).toHaveTitle(/MetroFlow/);

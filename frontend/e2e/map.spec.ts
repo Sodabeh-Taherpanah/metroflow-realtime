@@ -1,7 +1,29 @@
 import { test, expect } from '@playwright/test';
 
+const mockStations = [
+  {
+    id: '1',
+    name: 'Berlin Hauptbahnhof',
+    location: { latitude: 52.525, longitude: 13.369 },
+  },
+  {
+    id: '2',
+    name: 'Potsdamer Platz',
+    location: { latitude: 52.509, longitude: 13.376 },
+  },
+];
+
 test.describe('Map Page E2E Tests', () => {
   test.beforeEach(async ({ page }) => {
+    // Mock API calls
+    await page.route('**/api/vbb/stations*', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(mockStations),
+      });
+    });
+
     await page.goto('/map');
     await page.waitForLoadState('networkidle');
   });
