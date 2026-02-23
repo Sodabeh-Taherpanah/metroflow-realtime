@@ -3,6 +3,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import 'leaflet/dist/leaflet.css';
 import apiClient from '@/utils/api';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 type Station = {
   id: string;
@@ -253,15 +255,7 @@ const MapView = () => {
 
   if (!isMounted || !MapContainer || !TileLayer || !Marker || !Popup || !Polyline) {
     return (
-      <div
-        style={{
-          height: '100vh',
-          width: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
+      <div className="flex min-h-[60vh] items-center justify-center rounded-2xl border border-slate-200 bg-white text-sm text-slate-500 dark:border-slate-800/60 dark:bg-slate-950/60 dark:text-slate-300">
         Loading map...
       </div>
     );
@@ -280,241 +274,176 @@ const MapView = () => {
     : position;
 
   return (
-    <div style={{ height: '100vh', width: '100%', position: 'relative', display: 'flex' }}>
-      <div
-        style={{
-          width: 380,
-          height: '100%',
-          background: '#fff',
-          borderRight: '1px solid #ddd',
-          display: 'flex',
-          flexDirection: 'column',
-          zIndex: 1000,
-        }}
-      >
-        <div style={{ padding: 16, borderBottom: '1px solid #eee' }}>
-          <h2 style={{ margin: '0 0 12px 0', fontSize: 18, fontWeight: 600, color: '#000' }}>
-            Find Stations
-          </h2>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 12, position: 'relative' }}>
-            <input
-              type="text"
-              placeholder="Search location or station..."
-              value={searchQuery}
-              onChange={handleSearchInputChange}
-              onKeyDown={e => e.key === 'Enter' && handleSearch()}
-              style={{
-                flex: 1,
-                padding: '8px 12px',
-                border: '1px solid #ddd',
-                borderRadius: 6,
-                fontSize: 14,
-                color: '#000',
-                backgroundColor: '#fff',
-              }}
-            />
-            <button
-              onClick={handleSearch}
-              disabled={!searchQuery.trim() || isLoadingStations}
-              style={{
-                padding: '8px 16px',
-                background: '#1d4ed8',
-                color: '#fff',
-                border: 'none',
-                borderRadius: 6,
-                cursor: 'pointer',
-                fontSize: 14,
-                fontWeight: 500,
-              }}
-            >
-              Search
-            </button>
-            {showSuggestions && (suggestions.length > 0 || isLoadingSuggestions) && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '100%',
-                  left: 0,
-                  right: 40,
-                  background: '#fff',
-                  border: '1px solid #ddd',
-                  borderTop: 'none',
-                  borderRadius: '0 0 6px 6px',
-                  maxHeight: 200,
-                  overflowY: 'auto',
-                  zIndex: 1001,
-                  boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                }}
-              >
-                {isLoadingSuggestions && (
-                  <div style={{ padding: '10px 12px', color: '#666', fontSize: 13 }}>
-                    Loading...
-                  </div>
-                )}
-                {!isLoadingSuggestions && suggestions.length === 0 && (
-                  <div style={{ padding: '10px 12px', color: '#999', fontSize: 13 }}>
-                    No stations found
-                  </div>
-                )}
-                {suggestions.map((station: Station) => (
-                  <div
-                    key={station.id}
-                    onClick={() => handleSuggestionClick(station)}
-                    style={{
-                      padding: '10px 12px',
-                      borderBottom: '1px solid #f0f0f0',
-                      cursor: 'pointer',
-                      fontSize: 14,
-                      transition: 'background 0.1s',
-                      color: '#000',
-                    }}
-                    onMouseOver={e => {
-                      e.currentTarget.style.background = '#f3f4f6';
-                    }}
-                    onMouseOut={e => {
-                      e.currentTarget.style.background = 'transparent';
-                    }}
-                  >
-                    <div style={{ fontWeight: 500 }}>{station.name}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          <button
-            onClick={handleLocateMe}
-            disabled={isLocating}
-            style={{
-              width: '100%',
-              padding: '10px 16px',
-              background: isLocating ? '#93c5fd' : '#3b82f6',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 6,
-              cursor: isLocating ? 'not-allowed' : 'pointer',
-              fontSize: 14,
-              fontWeight: 500,
-            }}
-          >
-            {isLocating ? 'Locating...' : '📍 Locate Me'}
-          </button>
-          {locationError && (
-            <div
-              style={{
-                marginTop: 8,
-                padding: 8,
-                background: '#fee',
-                color: '#c00',
-                borderRadius: 4,
-                fontSize: 12,
-              }}
-            >
-              {locationError}
-            </div>
-          )}
-        </div>
-
-        <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
-          {isLoadingStations && (
-            <div style={{ textAlign: 'center', padding: 20, color: '#666' }}>
-              Loading stations...
-            </div>
-          )}
-          {!isLoadingStations && stations.length === 0 && (
-            <div style={{ textAlign: 'center', padding: 20, color: '#666' }}>
-              No stations found. Try searching or locating yourself.
-            </div>
-          )}
-          {stationMarkers.map((station: Station) => {
-            const distanceKm =
-              userLocation && station.location
-                ? getDistanceKm(userLocation, {
-                    latitude: station.location.latitude,
-                    longitude: station.location.longitude,
-                  })
-                : null;
-
-            return (
-              <div
-                key={station.id}
-                onClick={() => {
-                  setSelectedStation(station);
-                  if (mapRef.current && mapRef.current.setView && station.location) {
-                    mapRef.current.setView(
-                      [station.location.latitude, station.location.longitude],
-                      15
-                    );
-                  }
-                }}
-                style={{
-                  padding: 12,
-                  marginBottom: 8,
-                  background: selectedStation?.id === station.id ? '#dbeafe' : '#f9fafb',
-                  border:
-                    selectedStation?.id === station.id ? '2px solid #3b82f6' : '1px solid #e5e7eb',
-                  borderRadius: 8,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  color: '#000',
-                }}
-              >
-                <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4, color: '#000' }}>
-                  {station.name}
-                </div>
-                {distanceKm !== null && (
-                  <div style={{ fontSize: 12, color: '#666' }}>
-                    📍 {distanceKm.toFixed(2)} km away
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+    <div className="space-y-6">
+      <div>
+        <p className="text-sm uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">Map</p>
+        <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Live station map</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Search stations and visualize realtime data.
+        </p>
       </div>
 
-      {MapContainer && TileLayer && Marker && Popup && (
-        <MapContainer center={center} zoom={12} style={{ flex: 1, height: '100%' }} ref={mapRef}>
-          <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
-          />
-
-          {userLocation && (
-            <Marker position={[userLocation.latitude, userLocation.longitude]}>
-              <Popup>
-                <strong>Your Location</strong>
-                <div style={{ fontSize: 12 }}>
-                  {userLocation.latitude.toFixed(5)}, {userLocation.longitude.toFixed(5)}
-                </div>
-              </Popup>
-            </Marker>
-          )}
-
-          {stationMarkers.map(
-            (station: Station) =>
-              station.location && (
-                <Marker
-                  key={station.id}
-                  position={[station.location.latitude, station.location.longitude]}
+      <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
+        <Card className="flex h-[70vh] flex-col">
+          <div className="border-b border-slate-200 p-5 dark:border-slate-800/60">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Find stations</h2>
+            <div className="mt-4 space-y-3">
+              <div className="relative flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Search location or station..."
+                  value={searchQuery}
+                  onChange={handleSearchInputChange}
+                  onKeyDown={e => e.key === 'Enter' && handleSearch()}
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:border-slate-800/60 dark:bg-slate-950/60 dark:text-slate-100 dark:placeholder:text-slate-500"
+                />
+                <Button
+                  onClick={handleSearch}
+                  disabled={!searchQuery.trim() || isLoadingStations}
+                  className="bg-blue-600 text-white hover:bg-blue-500"
                 >
-                  <Popup>
-                    <strong>{station.name}</strong>
-                    {userLocation && (
-                      <div style={{ fontSize: 12, marginTop: 4 }}>
-                        Distance:{' '}
-                        {getDistanceKm(userLocation, {
-                          latitude: station.location.latitude,
-                          longitude: station.location.longitude,
-                        }).toFixed(2)}{' '}
-                        km
+                  Search
+                </Button>
+                {showSuggestions && (suggestions.length > 0 || isLoadingSuggestions) && (
+                  <div className="absolute left-0 right-20 top-[110%] z-10 max-h-56 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-xl dark:border-slate-800/60 dark:bg-slate-950/95">
+                    {isLoadingSuggestions && (
+                      <div className="px-3 py-2 text-xs text-slate-500 dark:text-slate-400">
+                        Loading...
                       </div>
                     )}
+                    {!isLoadingSuggestions && suggestions.length === 0 && (
+                      <div className="px-3 py-2 text-xs text-slate-500 dark:text-slate-400">
+                        No stations found
+                      </div>
+                    )}
+                    {suggestions.map((station: Station) => (
+                      <button
+                        key={station.id}
+                        onClick={() => handleSuggestionClick(station)}
+                        className="flex w-full flex-col gap-1 border-b border-slate-200 px-3 py-2 text-left text-sm text-slate-900 hover:bg-slate-100 dark:border-slate-800/40 dark:text-slate-100 dark:hover:bg-slate-900"
+                      >
+                        <span className="font-medium">{station.name}</span>
+                        <span className="text-xs text-slate-500">ID: {station.id}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <Button
+                onClick={handleLocateMe}
+                disabled={isLocating}
+                className="w-full bg-slate-900 text-slate-100 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700"
+              >
+                {isLocating ? 'Locating...' : '📍 Locate Me'}
+              </Button>
+              {locationError && (
+                <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs text-rose-300">
+                  {locationError}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-5">
+            {isLoadingStations && (
+              <div className="py-6 text-center text-sm text-slate-500 dark:text-slate-400">
+                Loading stations...
+              </div>
+            )}
+            {!isLoadingStations && stations.length === 0 && (
+              <div className="py-6 text-center text-sm text-slate-500 dark:text-slate-400">
+                No stations found. Try searching or locating yourself.
+              </div>
+            )}
+            <div className="space-y-2">
+              {stationMarkers.map((station: Station) => {
+                const distanceKm =
+                  userLocation && station.location
+                    ? getDistanceKm(userLocation, {
+                        latitude: station.location.latitude,
+                        longitude: station.location.longitude,
+                      })
+                    : null;
+
+                const isSelected = selectedStation?.id === station.id;
+
+                return (
+                  <button
+                    key={station.id}
+                    onClick={() => {
+                      setSelectedStation(station);
+                      if (mapRef.current && mapRef.current.setView && station.location) {
+                        mapRef.current.setView(
+                          [station.location.latitude, station.location.longitude],
+                          15
+                        );
+                      }
+                    }}
+                    className={`w-full rounded-lg border px-3 py-3 text-left transition ${
+                      isSelected
+                        ? 'border-blue-500/70 bg-blue-500/10 text-blue-700 dark:text-blue-100'
+                        : 'border-slate-200 bg-white text-slate-900 hover:bg-slate-100 dark:border-slate-800/60 dark:bg-slate-950/40 dark:text-slate-100 dark:hover:bg-slate-900'
+                    }`}
+                  >
+                    <div className="text-sm font-semibold">{station.name}</div>
+                    {distanceKm !== null && (
+                      <div className="text-xs text-slate-500 dark:text-slate-400">
+                        📍 {distanceKm.toFixed(2)} km away
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </Card>
+
+        <Card className="h-[70vh] overflow-hidden">
+          {MapContainer && TileLayer && Marker && Popup && (
+            <MapContainer center={center} zoom={12} className="h-full w-full" ref={mapRef}>
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
+              />
+
+              {userLocation && (
+                <Marker position={[userLocation.latitude, userLocation.longitude]}>
+                  <Popup>
+                    <strong>Your Location</strong>
+                    <div style={{ fontSize: 12 }}>
+                      {userLocation.latitude.toFixed(5)}, {userLocation.longitude.toFixed(5)}
+                    </div>
                   </Popup>
                 </Marker>
-              )
+              )}
+
+              {stationMarkers.map(
+                (station: Station) =>
+                  station.location && (
+                    <Marker
+                      key={station.id}
+                      position={[station.location.latitude, station.location.longitude]}
+                    >
+                      <Popup>
+                        <strong>{station.name}</strong>
+                        {userLocation && (
+                          <div style={{ fontSize: 12, marginTop: 4 }}>
+                            Distance:{' '}
+                            {getDistanceKm(userLocation, {
+                              latitude: station.location.latitude,
+                              longitude: station.location.longitude,
+                            }).toFixed(2)}{' '}
+                            km
+                          </div>
+                        )}
+                      </Popup>
+                    </Marker>
+                  )
+              )}
+            </MapContainer>
           )}
-        </MapContainer>
-      )}
+        </Card>
+      </div>
     </div>
   );
 };

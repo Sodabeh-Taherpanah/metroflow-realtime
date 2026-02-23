@@ -15,50 +15,50 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>('system');
   const [isDark, setIsDark] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
-  const updateTheme = (newTheme: Theme) => {
-    const isDarkMode =
-      newTheme === 'dark' ||
-      (newTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
+  const resolveTheme = (value: Theme) => {
+    if (value === 'system') {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
+    return value;
+  };
 
+  const applyTheme = (value: Theme) => {
+    const resolved = resolveTheme(value);
+    const isDarkMode = resolved === 'dark';
+
+    document.documentElement.classList.toggle('dark', isDarkMode);
+    document.body.classList.toggle('dark', isDarkMode);
+    document.documentElement.setAttribute('data-theme', resolved);
+    document.documentElement.style.colorScheme = resolved;
     setIsDark(isDarkMode);
   };
 
   useEffect(() => {
     const saved = (localStorage.getItem('theme') as Theme) || 'system';
+    setTheme(saved);
+  }, []);
 
-    // Set initial state from localStorage
-    const initializeTheme = () => {
-      setTheme(saved);
-      updateTheme(saved);
+  useEffect(() => {
+    applyTheme(theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
 
-      // Delay setting mounted to avoid cascading renders
-      setTimeout(() => setMounted(true), 0);
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = () => {
+      if (theme === 'system') {
+        applyTheme('system');
+      }
     };
 
-    initializeTheme();
-  }, []);
+    media.addEventListener('change', handleChange);
+    return () => media.removeEventListener('change', handleChange);
+  }, [theme]);
 
   const handleSetTheme = (newTheme: Theme) => {
     setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
-    updateTheme(newTheme);
   };
-
-  if (!mounted) {
-    return (
-      <ThemeContext.Provider value={{ theme, setTheme: handleSetTheme, isDark }}>
-        {children}
-      </ThemeContext.Provider>
-    );
-  }
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme: handleSetTheme, isDark }}>

@@ -1,7 +1,17 @@
 'use client';
 
 import React from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const data = [
   { name: 'Jan', uv: 4000, pv: 2400, amt: 2400 },
@@ -15,22 +25,37 @@ const data = [
 
 const ChartsView = () => {
   return (
-    <div>
-      <h1>Charts</h1>
-      <LineChart
-        width={600}
-        height={300}
-        data={data}
-        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-      >
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="name" />
-        <YAxis />
-        <Tooltip />
-        <Legend />
-        <Line type="monotone" dataKey="pv" stroke="#8884d8" />
-        <Line type="monotone" dataKey="uv" stroke="#82ca9d" />
-      </LineChart>
+    <div className="space-y-6">
+      <div>
+        <p className="text-sm uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
+          Analytics
+        </p>
+        <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
+          Performance charts
+        </h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Monthly ridership + provider throughput.
+        </p>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Ridership trends</CardTitle>
+        </CardHeader>
+        <CardContent className="h-85">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.2)" />
+              <XAxis dataKey="name" stroke="#94a3b8" />
+              <YAxis stroke="#94a3b8" />
+              <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderRadius: '8px' }} />
+              <Legend />
+              <Line type="monotone" dataKey="pv" stroke="#60a5fa" strokeWidth={2} />
+              <Line type="monotone" dataKey="uv" stroke="#34d399" strokeWidth={2} />
+            </LineChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
     </div>
   );
 };

@@ -1,14 +1,13 @@
 import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { ThemeProvider, ReactQueryProvider } from '@/providers';
 import ClientOnlyFeatures from '@/components/ClientOnlyFeatures';
 import { SITE_NAME, SITE_DESCRIPTION } from '@/core';
 import { Analytics } from '@vercel/analytics/react';
 import { Providers } from './providers';
+import AppShell from '@/components/layout/AppShell';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -88,17 +87,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </head>
         <body
           suppressHydrationWarning
-          className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen bg-white dark:bg-black text-gray-900 dark:text-gray-50 transition-colors`}
+          className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50 transition-colors`}
         >
           <ThemeProvider>
             <ReactQueryProvider>
               {/* Client-only features (shortcuts, listeners) */}
               <ClientOnlyFeatures />
-              <Header />
               <ErrorBoundary>
-                <main className="flex-1">{children}</main>
+                <AppShell>{children}</AppShell>
               </ErrorBoundary>
-              <Footer />
             </ReactQueryProvider>
           </ThemeProvider>
           <Analytics />
