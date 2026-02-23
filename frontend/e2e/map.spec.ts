@@ -53,12 +53,16 @@ test.describe('Map Page E2E Tests', () => {
   });
 
   test('should display stations list on load', async ({ page }) => {
-    // Wait for stations to load
-    await page.waitForTimeout(2000);
+    // Wait for stations to load via API
+    await page.waitForResponse(
+      response => response.url().includes('/api/vbb/stations') && response.status() === 200
+    );
 
-    // Check if stations are displayed
-    const stationItems = page.locator('div[style*="padding: 12"]').first();
-    await expect(stationItems).toBeVisible();
+    // Check if stations are displayed (they're button elements)
+    const stationButtons = page.locator('button[class*="rounded-lg"][class*="border"]').filter({
+      hasText: /Berlin|Potsdamer/,
+    });
+    await expect(stationButtons.first()).toBeVisible();
   });
 
   test('should search for stations', async ({ page }) => {
@@ -69,12 +73,16 @@ test.describe('Map Page E2E Tests', () => {
     await searchInput.fill('Potsdamer');
     await searchButton.click();
 
-    // Wait for results
-    await page.waitForTimeout(1500);
+    // Wait for API response with results
+    await page.waitForResponse(
+      response => response.url().includes('/api/vbb/stations') && response.status() === 200
+    );
 
-    // Check if results are shown
-    const results = page.locator('div[style*="padding: 12"]').first();
-    await expect(results).toBeVisible();
+    // Check if results are shown (station buttons)
+    const results = page.locator('button[class*="rounded-lg"][class*="border"]').filter({
+      hasText: 'Potsdamer',
+    });
+    await expect(results.first()).toBeVisible();
   });
 
   test('should show autocomplete suggestions', async ({ page }) => {
@@ -82,33 +90,56 @@ test.describe('Map Page E2E Tests', () => {
 
     // Type to trigger autocomplete
     await searchInput.fill('Ber');
-    await page.waitForTimeout(1000);
 
-    // Check if dropdown appears
-    const dropdown = page.locator('div[style*="position: absolute"]').first();
-    await expect(dropdown).toBeVisible();
+    // Wait for API response with suggestions
+    await page.waitForResponse(
+      response => response.url().includes('/api/vbb/stations') && response.status() === 200
+    );
+
+    // Check if dropdown with suggestions appears (contains buttons with station names)
+    const dropdown = page.locator('button[class*="text-left"][class*="text-sm"]').filter({
+      hasText: /Berlin|Ber/,
+    });
+    await expect(dropdown.first()).toBeVisible();
   });
 
   test('should click station from list', async ({ page }) => {
-    await page.waitForTimeout(2000);
+    // Wait for initial stations API call
+    await page.waitForResponse(
+      response => response.url().includes('/api/vbb/stations') && response.status() === 200
+    );
 
-    // Click first station in list
-    const firstStation = page.locator('div[style*="padding: 12"]').first();
+    // Click first station in list (use better selector)
+    const firstStation = page
+      .locator('button[class*="rounded-lg"][class*="border"]')
+      .filter({
+        hasText: /Berlin|Potsdamer/,
+      })
+      .first();
+
     await firstStation.click();
 
-    // Verify it's selected (blue border)
-    await expect(firstStation).toHaveCSS('border-top-color', 'rgb(59, 130, 246)');
-    await expect(firstStation).toHaveCSS('border-top-width', '2px');
+    // Verify it's selected by checking for blue styling
+    await expect(firstStation).toHaveClass(/border-blue-500/);
   });
 
   test('should show distance after locating and selecting station', async ({ page }) => {
-    // Just verify clicking a station works and it remains selected
-    const firstStation = page.locator('div[style*="padding: 12"]').first();
+    // Wait for initial stations API call
+    await page.waitForResponse(
+      response => response.url().includes('/api/vbb/stations') && response.status() === 200
+    );
 
-    // Click a station
+    // Click first station to select it
+    const firstStation = page
+      .locator('button[class*="rounded-lg"][class*="border"]')
+      .filter({
+        hasText: /Berlin|Potsdamer/,
+      })
+      .first();
+
     await firstStation.click();
 
-    // Verify station stays selected by checking for border
-    await expect(firstStation).toHaveCSS('border-top-color', 'rgb(59, 130, 246)');
+    // Verify station stays selected by checking for blue styling
+    await expect(firstStation).toHaveClass(/border-blue-500/);
   });
 });
