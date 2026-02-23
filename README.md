@@ -1,10 +1,11 @@
 # MetroFlow - Real-time Transport Intelligence Platform
 
-## Overview
+
 
 MetroFlow is a modern, full-stack real-time transport intelligence platform built with Next.js 15 and NestJS.
 
-## Tech Stack
+<img width="1773" height="900" alt="image" src="https://github.com/user-attachments/assets/62f8042a-f918-4854-8019-d1c94c9178d3" />
+
 
 ### Frontend
 
@@ -44,7 +45,6 @@ MetroFlow is a modern, full-stack real-time transport intelligence platform buil
 - **Vercel** for frontend deployment
 - **Railway/Render** for backend deployment
 
-## Project Structure
 
 ```
 project/
