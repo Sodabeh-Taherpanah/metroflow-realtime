@@ -9,41 +9,15 @@ MetroFlow is a modern, full-stack real-time transport intelligence platform buil
 
 ### Frontend
 
-- **Next.js 15** (App Router)
-- **React 19** with React Compiler
-- **TypeScript** for type safety
-- **Tailwind CSS v4** for styling
-- **ShadCN UI** for component library
-- **React Query** for state management
-- **WebSocket/SSE** for real-time updates
-- **Recharts** for data visualization
-- **Leaflet** for mapping
-- **Zod** for validation
-- **Sentry** for error tracking
-- **Vercel Analytics** for monitoring
+- **Next.js 15,  19, TypeScript** for type safety, Tailwind CSS, ShadCN UI, React Query, WebSocket/SSE, Recharts, Leaflet, Zod, Sentry, Vercel Analytics** for monitoring
 
 ### Backend
 
-- **NestJS** (modular architecture)
-- **TypeScript**
-- **REST API + WebSocket Gateway**
-- **PostgreSQL/MongoDB** for persistence
-- **Redis** for caching
-- **Pino** for logging
-- **Swagger** for API documentation
-- **Class-validator** for validation
-- **Sentry** for error tracking
+- **NestJS, TypeScript, REST API + WebSocket Gateway, PostgreSQL/MongoDB, Redis, Pino, Swagger, Class-validator, Sentry
 
 ### DevOps & Security
 
-- **GitHub Actions** for CI/CD
-- **Docker** & **Docker Compose**
-- **Helmet** for security headers
-- **Rate limiting**
-- **Strict CSP** (Content Security Policy)
-- **Environment variable management**
-- **Vercel** for frontend deployment
-- **Railway/Render** for backend deployment
+- **GitHub Actions** for CI/CD, Docker, Helmet, Rate limiting, Strict CSP, Environment variable management, Vercel** for frontend dev, Railway/Render for backend dev
 
 
 ```
