@@ -23,6 +23,15 @@ interface Departure {
 const RealTimeDepartures = () => {
   const [departures, setDepartures] = useState<Departure[]>([]);
   const [stationId] = useState('900029305'); // Default station
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     socket.connect();
@@ -72,7 +81,7 @@ const RealTimeDepartures = () => {
                 ? new Date(whenValue).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                 : 'Unknown Time';
               const minutesAway = whenValue
-                ? Math.max(0, Math.round((new Date(whenValue).getTime() - Date.now()) / 60000))
+                ? Math.max(0, Math.round((new Date(whenValue).getTime() - currentTime) / 60000))
                 : null;
 
               return (

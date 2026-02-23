@@ -12,49 +12,53 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+const SYSTEM_THEME_QUERY = '(prefers-color-scheme: dark)';
+
+const isTheme = (value: string | null): value is Theme => {
+  return value === 'light' || value === 'dark' || value === 'system';
+};
+
+const getSystemPrefersDark = () => {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  return window.matchMedia(SYSTEM_THEME_QUERY).matches;
+};
+
+const getInitialTheme = (): Theme => {
+  if (typeof window === 'undefined') {
+    return 'system';
+  }
+
+  const savedTheme = localStorage.getItem('theme');
+  return isTheme(savedTheme) ? savedTheme : 'system';
+};
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('system');
-  const [isDark, setIsDark] = useState(false);
+  const [theme, setTheme] = useState<Theme>(getInitialTheme);
+  const [systemPrefersDark, setSystemPrefersDark] = useState(getSystemPrefersDark);
 
-  const resolveTheme = (value: Theme) => {
-    if (value === 'system') {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
-    return value;
-  };
-
-  const applyTheme = (value: Theme) => {
-    const resolved = resolveTheme(value);
-    const isDarkMode = resolved === 'dark';
-
-    document.documentElement.classList.toggle('dark', isDarkMode);
-    document.body.classList.toggle('dark', isDarkMode);
-    document.documentElement.setAttribute('data-theme', resolved);
-    document.documentElement.style.colorScheme = resolved;
-    setIsDark(isDarkMode);
-  };
+  const resolvedTheme = theme === 'system' ? (systemPrefersDark ? 'dark' : 'light') : theme;
+  const isDark = resolvedTheme === 'dark';
 
   useEffect(() => {
-    const saved = (localStorage.getItem('theme') as Theme) || 'system';
-    setTheme(saved);
-  }, []);
-
-  useEffect(() => {
-    applyTheme(theme);
+    document.documentElement.classList.toggle('dark', isDark);
+    document.body.classList.toggle('dark', isDark);
+    document.documentElement.setAttribute('data-theme', resolvedTheme);
+    document.documentElement.style.colorScheme = resolvedTheme;
     localStorage.setItem('theme', theme);
-  }, [theme]);
+  }, [isDark, resolvedTheme, theme]);
 
   useEffect(() => {
-    const media = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = () => {
-      if (theme === 'system') {
-        applyTheme('system');
-      }
+    const media = window.matchMedia(SYSTEM_THEME_QUERY);
+    const handleChange = (event: MediaQueryListEvent) => {
+      setSystemPrefersDark(event.matches);
     };
 
     media.addEventListener('change', handleChange);
     return () => media.removeEventListener('change', handleChange);
-  }, [theme]);
+  }, []);
 
   const handleSetTheme = (newTheme: Theme) => {
     setTheme(newTheme);
