@@ -20,26 +20,6 @@ MetroFlow is a modern, full-stack real-time transport intelligence platform buil
 - **GitHub Actions** for CI/CD, Docker, Helmet, Rate limiting, Strict CSP, Environment variable management, Vercel** for frontend dev, Railway/Render for backend dev
 
 
-```
-project/
-├── frontend/              # Next.js 15 frontend
-│   ├── app/              # App Router
-│   ├── components/       # React components
-│   ├── core/            # Types, utils, constants
-│   ├── modules/         # Feature modules
-│   └── providers/       # Context providers
-├── backend/             # NestJS backend
-│   ├── src/
-│   │   ├── modules/     # Feature modules
-│   │   ├── common/      # Shared utilities
-│   │   └── main.ts      # Entry point
-│   └── Dockerfile
-├── docker-compose.yml
-├── .github/
-│   └── workflows/
-│       └── ci-cd.yml
-└── README.md
-```
 
 ## Architecture
 
