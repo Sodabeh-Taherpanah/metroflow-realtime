@@ -30,20 +30,18 @@ test.describe('MetroFlow E2E Tests', () => {
     await expect(page).toHaveTitle(/MetroFlow/);
   });
 
-  test('should navigate to stations page', async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name.includes('Mobile'), 'Nav links hidden on mobile');
+  test('should navigate to stations page', async ({ page }) => {
     await page.goto('/');
-    const stationsLink = page.locator('a:has-text("Stations")');
-    await stationsLink.waitFor({ state: 'visible', timeout: 5000 });
+    const stationsLink = page.getByRole('link', { name: 'Browse stations' });
+    await expect(stationsLink).toBeVisible();
     await stationsLink.click();
     await expect(page).toHaveURL(/\/stations/);
   });
 
-  test('should navigate to departures page', async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name.includes('Mobile'), 'Nav links hidden on mobile');
+  test('should navigate to departures page', async ({ page }) => {
     await page.goto('/');
-    const departuresLink = page.locator('a:has-text("Departures")');
-    await departuresLink.waitFor({ state: 'visible', timeout: 5000 });
+    const departuresLink = page.getByRole('link', { name: 'View departures' });
+    await expect(departuresLink).toBeVisible();
     await departuresLink.click();
     await expect(page).toHaveURL(/\/departures/);
   });
