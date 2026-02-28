@@ -4,7 +4,7 @@
 
 MetroFlow is a modern, full-stack real-time transport intelligence platform built with Next.js 15 and NestJS.
 
-![App Screenshot](metroflow_Landing.jpg)
+![App Screenshot](images/metroflow_Landing.jpg)
 
 <img width="1773" height="900" alt="image" src="https://github.com/user-attachments/assets/62f8042a-f918-4854-8019-d1c94c9178d3" />
 
