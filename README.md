@@ -114,6 +114,145 @@ npm run lint      # Run ESLint
 npm run test      # Run tests
 ```
 
+## Step-by-Step Testing
+
+Use this checklist to verify MetroFlow end-to-end from a clean terminal session.
+
+### 1) Pre-checks
+
+- Use Node.js 20.9+ (recommended: Node 22)
+- Install dependencies once:
+
+```bash
+cd backend && npm install
+cd ../frontend && npm install
+```
+
+### 2) Build verification
+
+```bash
+cd backend
+npm run build
+
+cd ../frontend
+npm run build
+```
+
+Expected result: both builds finish without TypeScript errors.
+
+### 3) Start backend API
+
+```bash
+cd backend
+npm run dev
+```
+
+Backend default URL: `http://localhost:3001`
+
+Quick smoke check:
+
+```bash
+curl -s http://localhost:3001/api/ingest/routes | jq .
+```
+
+Expected result: JSON response with `dataDir`, `rawDir`, `canonicalDir`, and `routes`.
+
+### 4) Run ingest probe test (GTFS)
+
+In a new terminal:
+
+```bash
+curl -s -X POST http://localhost:3001/api/ingest/probe \
+	-H "Content-Type: application/json" \
+	-d '{"gtfsZipPath":"./data/gtfs/sample-gtfs.zip"}' | jq .
+```
+
+Expected result: `{ "jobId": "...", "status": "queued" }`
+
+Poll job status:
+
+```bash
+curl -s http://localhost:3001/api/ingest/jobs/<jobId> | jq .
+```
+
+Expected result: `status: "completed"` and a `result` object containing:
+
+- `stats` (`shapeCount`, `pointCount`, `canonicalPointCount`)
+- `routeArtifacts` with `rawPath` and `canonicalPath`
+- optional `validationWarnings`
+
+### 5) Verify generated artifacts
+
+```bash
+curl -s http://localhost:3001/api/ingest/routes | jq .
+```
+
+Expected result: each route includes raw and canonical file paths and point counts.
+
+Inspect one canonical file:
+
+```bash
+cat backend/data/canonical/route-shape_A.geojson | jq .
+```
+
+Expected result: valid GeoJSON `FeatureCollection` with a `LineString` geometry.
+
+### 6) Start frontend and verify tracking page
+
+In a separate terminal:
+
+```bash
+cd frontend
+npm run dev
+```
+
+Open: `http://localhost:3000/tracking`
+
+Manual checks on `/tracking`:
+
+- Click **Probe GTFS/GPX** and wait for completion
+- Confirm **Logs** shows queued/completed status
+- Confirm **Route List** shows route entries
+- Toggle **Raw / Canonical** and verify point counts/path values update
+
+Optional terminal check:
+
+```bash
+curl -s http://localhost:3000/tracking >/dev/null && echo "Tracking page reachable"
+```
+
+### 7) Automated test commands
+
+Frontend:
+
+```bash
+cd frontend
+npm run test
+npm run test:e2e
+```
+
+Backend:
+
+```bash
+cd backend
+npm run test
+npm run test:e2e
+```
+
+### 8) Common troubleshooting
+
+- Port already in use (3001):
+
+```bash
+lsof -i :3001 | grep -v COMMAND | awk '{print $2}' | xargs -r kill -9
+```
+
+- Next.js Node version error: switch Node version before running frontend:
+
+```bash
+nvm use 22
+```
+
 ## Environment Variables
 
 ### Frontend (.env.local)
