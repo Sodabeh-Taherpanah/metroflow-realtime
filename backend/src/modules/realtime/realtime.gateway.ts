@@ -10,6 +10,11 @@ import { Server, Socket } from 'socket.io';
 import { Injectable, Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import { createClient, RedisClientType } from 'redis';
+import { z } from 'zod';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { AgentTrace } from '../../entities/agent-trace.entity';
 
 interface CachedDeparture {
   id: string;
@@ -22,6 +27,23 @@ interface CachedDeparture {
   realtime: boolean;
   timestamp: number;
 }
+
+const AgentLocationUpdateSchema = z.object({
+  id: z.string().min(1),
+  type: z.literal('agent.location.update').optional(),
+  routeId: z.string().min(1).optional(),
+  agentId: z.string().min(1).optional(),
+  status: z.string().optional(),
+  location: z.object({
+    lat: z.number().gte(-90).lte(90),
+    lng: z.number().gte(-180).lte(180),
+    ts: z.string().datetime().optional(),
+  }),
+  meta: z.record(z.any()).optional(),
+  timestamp: z.string().datetime().optional(),
+});
+
+type AgentLocationUpdatePayload = z.infer<typeof AgentLocationUpdateSchema>;
 
 @Injectable()
 @WebSocketGateway({
@@ -37,13 +59,20 @@ export class RealtimeGateway
 
   private departureIntervals = new Map<string, NodeJS.Timeout>();
   private stationSubscriptions = new Map<string, Set<string>>();
+  private redisClient: RedisClientType | null = null;
+  private readonly tracesEnabled = process.env.ENABLE_TRACES === 'true';
 
-  constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {
+  constructor(
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    @InjectRepository(AgentTrace)
+    private readonly agentTraceRepository: Repository<AgentTrace>,
+  ) {
     console.log('RealtimeGateway initialized with cache support');
   }
 
   afterInit() {
     console.log('WebSocket initialized with real-time caching');
+    this.initializeRedisClient();
   }
 
   handleConnection(client: Socket) {
@@ -243,12 +272,90 @@ export class RealtimeGateway
   }
 
   emitAgentLocationUpdate(payload: Record<string, any>) {
-    const message = {
-      ...payload,
-      timestamp: payload.timestamp || new Date().toISOString(),
+    return this.processAgentLocationUpdate(payload, 'internal');
+  }
+
+  @SubscribeMessage('agent.location.update')
+  async handleAgentLocationUpdate(client: Socket, payload: unknown) {
+    const clientId = client?.id || 'unknown';
+    return this.processAgentLocationUpdate(payload, clientId);
+  }
+
+  private async processAgentLocationUpdate(payload: unknown, source: string) {
+    const parsedPayload = AgentLocationUpdateSchema.safeParse(payload);
+
+    if (!parsedPayload.success) {
+      console.warn('Rejected agent.location.update payload', {
+        source,
+        reason: parsedPayload.error.flatten(),
+      });
+      return {
+        ok: false,
+        error: 'Invalid payload',
+      };
+    }
+
+    const validatedPayload: AgentLocationUpdatePayload = {
+      ...parsedPayload.data,
+      type: 'agent.location.update',
+      timestamp: parsedPayload.data.timestamp || new Date().toISOString(),
     };
-    console.log('Received simulator emit: agent.location.update', message);
-    this.server.emit('agent.location.update', message);
-    return message;
+
+    await this.writeLatestState(validatedPayload);
+
+    if (this.tracesEnabled) {
+      await this.persistTrace(validatedPayload);
+    }
+
+    this.server.emit('agent.location.update', validatedPayload);
+
+    return {
+      ok: true,
+      payload: validatedPayload,
+    };
+  }
+
+  private async initializeRedisClient() {
+    const redisUrl = process.env.REDIS_URL;
+    if (!redisUrl) {
+      console.warn('REDIS_URL is not set; latest-state writes are disabled');
+      return;
+    }
+
+    this.redisClient = createClient({ url: redisUrl });
+    this.redisClient.on('error', (error) => {
+      console.error('Redis client error', error);
+    });
+
+    try {
+      await this.redisClient.connect();
+      console.log('Redis client connected for latest-state writes');
+    } catch (error) {
+      console.error('Failed to connect Redis client', error);
+      this.redisClient = null;
+    }
+  }
+
+  private async writeLatestState(payload: AgentLocationUpdatePayload) {
+    if (!this.redisClient || !this.redisClient.isOpen) {
+      return;
+    }
+
+    const key = `agent:latest:${payload.id}`;
+    await this.redisClient.set(key, JSON.stringify(payload));
+  }
+
+  private async persistTrace(payload: AgentLocationUpdatePayload) {
+    try {
+      await this.agentTraceRepository.insert({
+        agentId: payload.id,
+        payload,
+      });
+    } catch (error) {
+      console.error('Trace persistence failed for agent.location.update', {
+        agentId: payload.id,
+        error,
+      });
+    }
   }
 }
