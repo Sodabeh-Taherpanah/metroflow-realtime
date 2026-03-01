@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -63,7 +63,7 @@ export default function TrackingPage() {
     setLogs(prev => [message, ...prev].slice(0, 30));
   };
 
-  const fetchRoutes = async () => {
+  const fetchRoutes = useCallback(async () => {
     try {
       const response = await fetch(`${apiBaseUrl}/api/ingest/routes`);
       if (!response.ok) {
@@ -74,11 +74,11 @@ export default function TrackingPage() {
     } catch {
       // Non-blocking: routes list is optional for page load
     }
-  };
+  }, [apiBaseUrl]);
 
   useEffect(() => {
     fetchRoutes();
-  }, []);
+  }, [fetchRoutes]);
 
   const runProbe = async () => {
     setError(null);
@@ -187,7 +187,11 @@ export default function TrackingPage() {
         throw new Error(text || `Emit failed with status ${response.status}`);
       }
 
-      const payload = (await response.json()) as { ok?: boolean; event?: string; emitted?: any };
+      const payload = (await response.json()) as {
+        ok?: boolean;
+        event?: string;
+        emitted?: Record<string, unknown>;
+      };
       appendLog(
         `Test emit ${payload.ok ? 'succeeded' : 'completed'}: ${payload.event || 'agent.location.update'}`
       );
