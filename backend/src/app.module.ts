@@ -25,6 +25,7 @@ import { ProvidersModule } from './modules/providers/providers.module';
 import { HealthModule } from './modules/health/health.module';
 import { IngestModule } from './modules/ingest/ingest.module';
 import { SimulatorModule } from './modules/simulator/simulator.module';
+import { TrackingModule } from './modules/tracking/tracking.module';
 import { SecurityMiddlewareService } from './common/security/security-middleware.service';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { Request, Response, NextFunction } from 'express';
@@ -91,6 +92,7 @@ class SecurityHeadersMiddleware implements NestMiddleware {
     HealthModule,
     IngestModule,
     SimulatorModule,
+    TrackingModule,
   ],
   controllers: [AppController, VbbController],
   providers: [
