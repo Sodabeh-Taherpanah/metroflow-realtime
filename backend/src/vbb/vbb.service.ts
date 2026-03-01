@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
-import { lastValueFrom } from 'rxjs';
+import { Injectable, Logger } from "@nestjs/common";
+import { HttpService } from "@nestjs/axios";
+import { lastValueFrom } from "rxjs";
 
 export interface VbbLocation {
   type: string;
@@ -14,15 +14,15 @@ export interface VbbLocation {
 
 @Injectable()
 export class VbbService {
-  private logger = new Logger('VbbService');
-  private readonly BASE_URL = 'https://v6.vbb.transport.rest';
+  private logger = new Logger("VbbService");
+  private readonly BASE_URL = "https://v6.vbb.transport.rest";
 
   constructor(private readonly httpService: HttpService) {
-    this.logger.log('VbbService initialized');
+    this.logger.log("VbbService initialized");
   }
 
   async getStations(
-    query: string = 'Berlin',
+    query: string = "Berlin",
     limit: number = 10,
   ): Promise<VbbLocation[]> {
     this.logger.log(`Fetching stations: query=${query}, limit=${limit}`);
@@ -36,7 +36,7 @@ export class VbbService {
     return result;
   }
 
-  async getDepartures(stationId: string = '900029305', duration: number = 60) {
+  async getDepartures(stationId: string = "900029305", duration: number = 60) {
     this.logger.log(
       `Fetching departures: stationId=${stationId}, duration=${duration}`,
     );

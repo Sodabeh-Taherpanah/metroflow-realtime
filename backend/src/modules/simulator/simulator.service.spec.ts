@@ -1,6 +1,6 @@
-import { mkdirSync, rmSync, writeFileSync } from 'fs';
-import { resolve } from 'path';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { mkdirSync, rmSync, writeFileSync } from "fs";
+import { resolve } from "path";
+import { BadRequestException, NotFoundException } from "@nestjs/common";
 import {
   afterAll,
   afterEach,
@@ -8,18 +8,18 @@ import {
   describe,
   expect,
   it,
-} from '@jest/globals';
-import { SimulatorService } from './simulator.service';
+} from "@jest/globals";
+import { SimulatorService } from "./simulator.service";
 
-describe('SimulatorService', () => {
+describe("SimulatorService", () => {
   const baseDir = resolve(
     process.cwd(),
-    '.tmp-tests',
+    ".tmp-tests",
     `simulator-service-${Date.now()}`,
   );
 
   const createSamples = (routeId: string) => {
-    const samplesDir = resolve(baseDir, 'samples');
+    const samplesDir = resolve(baseDir, "samples");
     mkdirSync(samplesDir, { recursive: true });
 
     writeFileSync(
@@ -54,8 +54,8 @@ describe('SimulatorService', () => {
     rmSync(baseDir, { recursive: true, force: true });
   });
 
-  it('starts a simulation and completes for non-looping jobs', () => {
-    createSamples('r1');
+  it("starts a simulation and completes for non-looping jobs", () => {
+    createSamples("r1");
 
     const realtimeGateway = {
       emitAgentLocationUpdate: jest.fn(() => true),
@@ -63,7 +63,7 @@ describe('SimulatorService', () => {
     const service = new SimulatorService(realtimeGateway as any);
 
     const started = service.startSimulation({
-      routeId: 'r1',
+      routeId: "r1",
       intervalMs: 10,
       loop: false,
       agents: 1,
@@ -71,18 +71,18 @@ describe('SimulatorService', () => {
       speedKph: 20,
     });
 
-    expect(started.status).toBe('running');
+    expect(started.status).toBe("running");
     expect(started.config.sampleCount).toBe(3);
 
     jest.advanceTimersByTime(40);
 
     const job = service.getSimulationJob(started.jobId);
-    expect(job.status).toBe('completed');
+    expect(job.status).toBe("completed");
     expect(job.emittedCount).toBe(3);
     expect(realtimeGateway.emitAgentLocationUpdate).toHaveBeenCalledTimes(3);
   });
 
-  it('throws when routeId is missing', () => {
+  it("throws when routeId is missing", () => {
     const realtimeGateway = {
       emitAgentLocationUpdate: jest.fn(() => true),
     };
@@ -90,23 +90,23 @@ describe('SimulatorService', () => {
 
     expect(() =>
       service.startSimulation({
-        routeId: '',
+        routeId: "",
       }),
     ).toThrow(BadRequestException);
   });
 
-  it('throws when the requested job does not exist', () => {
+  it("throws when the requested job does not exist", () => {
     const realtimeGateway = {
       emitAgentLocationUpdate: jest.fn(() => true),
     };
     const service = new SimulatorService(realtimeGateway as any);
 
-    expect(() => service.getSimulationJob('missing-job')).toThrow(
+    expect(() => service.getSimulationJob("missing-job")).toThrow(
       NotFoundException,
     );
   });
 
-  it('emits a test update with defaults', () => {
+  it("emits a test update with defaults", () => {
     const realtimeGateway = {
       emitAgentLocationUpdate: jest.fn(() => true),
     };
@@ -116,14 +116,14 @@ describe('SimulatorService', () => {
 
     expect(result).toEqual({
       ok: true,
-      event: 'agent.location.update',
+      event: "agent.location.update",
       emitted: true,
     });
 
     expect(realtimeGateway.emitAgentLocationUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
-        routeId: 'test-route',
-        status: 'active',
+        routeId: "test-route",
+        status: "active",
         meta: expect.objectContaining({
           speedKph: 8.5,
           seq: 0,

@@ -1,21 +1,21 @@
-import { Controller, Get } from '@nestjs/common';
-import { DataSource } from 'typeorm';
-import { createClient } from 'redis';
+import { Controller, Get } from "@nestjs/common";
+import { DataSource } from "typeorm";
+import { createClient } from "redis";
 
-@Controller('api/health')
+@Controller("api/health")
 export class ApiHealthController {
   constructor(private readonly dataSource: DataSource) {}
 
   @Get()
   async getHealth() {
-    let databaseStatus: 'up' | 'down' = 'down';
-    let redisStatus: 'up' | 'down' = 'down';
+    let databaseStatus: "up" | "down" = "down";
+    let redisStatus: "up" | "down" = "down";
 
     try {
-      await this.dataSource.query('SELECT 1');
-      databaseStatus = 'up';
+      await this.dataSource.query("SELECT 1");
+      databaseStatus = "up";
     } catch {
-      databaseStatus = 'down';
+      databaseStatus = "down";
     }
 
     const redisUrl = process.env.REDIS_URL;
@@ -24,9 +24,9 @@ export class ApiHealthController {
       try {
         await redisClient.connect();
         await redisClient.ping();
-        redisStatus = 'up';
+        redisStatus = "up";
       } catch {
-        redisStatus = 'down';
+        redisStatus = "down";
       } finally {
         if (redisClient.isOpen) {
           await redisClient.quit();
@@ -35,7 +35,7 @@ export class ApiHealthController {
     }
 
     const status =
-      databaseStatus === 'up' && redisStatus === 'up' ? 'ok' : 'degraded';
+      databaseStatus === "up" && redisStatus === "up" ? "ok" : "degraded";
 
     return {
       status,

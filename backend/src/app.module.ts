@@ -3,32 +3,32 @@ import {
   Injectable,
   CanActivate,
   NestMiddleware,
-} from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { TerminusModule } from '@nestjs/terminus';
-import { CacheModule } from '@nestjs/cache-manager';
-import { HttpModule } from '@nestjs/axios';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { LoggerModule } from './common/logger/logger.module';
-import { ConfigurationModule } from './common/config/config.module';
-import { VbbController } from './vbb/vbb.controller';
-import { VbbService } from './vbb/vbb.service';
+} from "@nestjs/common";
+import { ConfigModule } from "@nestjs/config";
+import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
+import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
+import { TerminusModule } from "@nestjs/terminus";
+import { CacheModule } from "@nestjs/cache-manager";
+import { HttpModule } from "@nestjs/axios";
+import { AppController } from "./app.controller";
+import { AppService } from "./app.service";
+import { LoggerModule } from "./common/logger/logger.module";
+import { ConfigurationModule } from "./common/config/config.module";
+import { VbbController } from "./vbb/vbb.controller";
+import { VbbService } from "./vbb/vbb.service";
 
-import { StationsModule } from './modules/stations/stations.module';
-import { RealtimeModule } from './modules/realtime/realtime.module';
-import { RoutesModule } from './modules/routes/routes.module';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { ProvidersModule } from './modules/providers/providers.module';
-import { HealthModule } from './modules/health/health.module';
-import { IngestModule } from './modules/ingest/ingest.module';
-import { SimulatorModule } from './modules/simulator/simulator.module';
-import { TrackingModule } from './modules/tracking/tracking.module';
-import { SecurityMiddlewareService } from './common/security/security-middleware.service';
-import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
-import { Request, Response, NextFunction } from 'express';
+import { StationsModule } from "./modules/stations/stations.module";
+import { RealtimeModule } from "./modules/realtime/realtime.module";
+import { RoutesModule } from "./modules/routes/routes.module";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import { ProvidersModule } from "./modules/providers/providers.module";
+import { HealthModule } from "./modules/health/health.module";
+import { IngestModule } from "./modules/ingest/ingest.module";
+import { SimulatorModule } from "./modules/simulator/simulator.module";
+import { TrackingModule } from "./modules/tracking/tracking.module";
+import { SecurityMiddlewareService } from "./common/security/security-middleware.service";
+import { LoggingInterceptor } from "./common/interceptors/logging.interceptor";
+import { Request, Response, NextFunction } from "express";
 
 @Injectable()
 class NoopGuard implements CanActivate {
@@ -54,7 +54,7 @@ class SecurityHeadersMiddleware implements NestMiddleware {
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: ".env",
     }),
     // Cache manager for real-time data
     CacheModule.register({
@@ -64,7 +64,7 @@ class SecurityHeadersMiddleware implements NestMiddleware {
     }),
     // Temporarily disabled TypeORM to debug startup issue
     TypeOrmModule.forRoot({
-      type: 'postgres',
+      type: "postgres",
       url: process.env.DATABASE_URL,
       autoLoadEntities: true,
       synchronize: true, // Use migrations instead
@@ -75,7 +75,7 @@ class SecurityHeadersMiddleware implements NestMiddleware {
         {
           ttl: process.env.RATE_TTL ? parseInt(process.env.RATE_TTL, 10) : 60,
           limit: Number(process.env.RATE_LIMIT) || 100,
-          name: 'default',
+          name: "default",
         },
       ],
     } as any),
@@ -102,7 +102,7 @@ class SecurityHeadersMiddleware implements NestMiddleware {
     {
       provide: APP_GUARD,
       useClass:
-        process.env.NODE_ENV === 'development' ? NoopGuard : ThrottlerGuard,
+        process.env.NODE_ENV === "development" ? NoopGuard : ThrottlerGuard,
     },
     {
       provide: APP_INTERCEPTOR,
@@ -112,6 +112,6 @@ class SecurityHeadersMiddleware implements NestMiddleware {
 })
 export class AppModule {
   configure(consumer: any) {
-    consumer.apply(SecurityHeadersMiddleware).forRoutes('*');
+    consumer.apply(SecurityHeadersMiddleware).forRoutes("*");
   }
 }

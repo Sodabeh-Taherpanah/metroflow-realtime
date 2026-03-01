@@ -1,6 +1,7 @@
-import { existsSync, readFileSync } from 'fs';
-import { resolve } from 'path';
-import { io } from 'socket.io-client';
+import { existsSync, readFileSync } from "fs";
+import { resolve } from "path";
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { io } = require("socket.io-client");
 
 type RouteSample = {
   seq: number;
@@ -20,47 +21,47 @@ type CliOptions = {
 
 function parseArgs(argv: string[]): CliOptions {
   const defaults: CliOptions = {
-    route: 'shape_A',
+    route: "shape_A",
     interval: 1000,
     loop: true,
     agents: 1,
-    url: process.env.WS_URL || 'http://localhost:3001',
+    url: process.env.WS_URL || "http://localhost:3001",
   };
 
   const args = new Map<string, string>();
   for (const entry of argv) {
-    if (!entry.startsWith('--')) {
+    if (!entry.startsWith("--")) {
       continue;
     }
-    const [key, value] = entry.slice(2).split('=');
+    const [key, value] = entry.slice(2).split("=");
     if (key) {
-      args.set(key, value ?? '');
+      args.set(key, value ?? "");
     }
   }
 
-  const interval = Number(args.get('interval') ?? defaults.interval);
-  const agents = Number(args.get('agents') ?? defaults.agents);
-  const loopRaw = args.get('loop');
+  const interval = Number(args.get("interval") ?? defaults.interval);
+  const agents = Number(args.get("agents") ?? defaults.agents);
+  const loopRaw = args.get("loop");
 
   return {
-    route: args.get('route') || defaults.route,
+    route: args.get("route") || defaults.route,
     interval:
       Number.isFinite(interval) && interval > 0 ? interval : defaults.interval,
-    loop: loopRaw === undefined ? defaults.loop : loopRaw !== 'false',
+    loop: loopRaw === undefined ? defaults.loop : loopRaw !== "false",
     agents:
       Number.isFinite(agents) && agents > 0
         ? Math.floor(agents)
         : defaults.agents,
-    url: args.get('url') || defaults.url,
+    url: args.get("url") || defaults.url,
   };
 }
 
 function loadSamples(routeId: string): RouteSample[] {
-  const dataDir = process.env.DATA_DIR || './data';
+  const dataDir = process.env.DATA_DIR || "./data";
   const samplePath = resolve(
     process.cwd(),
     dataDir,
-    'samples',
+    "samples",
     `route-${routeId}-samples.json`,
   );
 
@@ -79,7 +80,7 @@ function loadSamples(routeId: string): RouteSample[] {
     ];
   }
 
-  const file = JSON.parse(readFileSync(samplePath, 'utf-8'));
+  const file = JSON.parse(readFileSync(samplePath, "utf-8"));
   const points = Array.isArray(file?.samples) ? file.samples : [];
   if (points.length === 0) {
     throw new Error(`No samples found in ${samplePath}`);
@@ -97,12 +98,12 @@ function loadSamples(routeId: string): RouteSample[] {
 function startSimulator(options: CliOptions) {
   const samples = loadSamples(options.route);
   const socket = io(options.url, {
-    transports: ['websocket'],
+    transports: ["websocket"],
   });
 
   let tick = 0;
 
-  socket.on('connect', () => {
+  socket.on("connect", () => {
     console.log(`[sim-cli] connected id=${socket.id} url=${options.url}`);
     console.log(
       `[sim-cli] route=${options.route} interval=${options.interval}ms loop=${options.loop} agents=${options.agents} samples=${samples.length}`,
@@ -126,10 +127,10 @@ function startSimulator(options: CliOptions) {
           dist: sample.dist,
           bearing: sample.bearing,
           emittedAt: new Date().toISOString(),
-          source: 'simulator-cli',
+          source: "simulator-cli",
         };
 
-        socket.emit('agent.location.update', payload);
+        socket.emit("agent.location.update", payload);
         console.log(
           `[sim-cli] emit agent=${payload.agentId} seq=${payload.seq} lat=${payload.location.lat} lng=${payload.location.lng}`,
         );
@@ -138,20 +139,20 @@ function startSimulator(options: CliOptions) {
       tick += 1;
 
       if (!options.loop && tick >= samples.length) {
-        console.log('[sim-cli] completed non-loop run, disconnecting.');
+        console.log("[sim-cli] completed non-loop run, disconnecting.");
         clearInterval(timer);
         socket.disconnect();
       }
     }, options.interval);
 
-    socket.on('disconnect', () => {
+    socket.on("disconnect", () => {
       clearInterval(timer);
-      console.log('[sim-cli] disconnected');
+      console.log("[sim-cli] disconnected");
     });
   });
 
-  socket.on('connect_error', (error) => {
-    console.error('[sim-cli] connect error:', error.message);
+  socket.on("connect_error", (error) => {
+    console.error("[sim-cli] connect error:", error.message);
   });
 }
 

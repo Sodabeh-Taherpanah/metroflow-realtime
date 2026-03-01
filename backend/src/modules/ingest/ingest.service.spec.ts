@@ -1,12 +1,12 @@
-import { mkdirSync, rmSync, writeFileSync, existsSync, readFileSync } from 'fs';
-import { resolve } from 'path';
-import { afterAll, beforeEach, describe, expect, it } from '@jest/globals';
-import { IngestService } from './ingest.service';
+import { mkdirSync, rmSync, writeFileSync, existsSync, readFileSync } from "fs";
+import { resolve } from "path";
+import { afterAll, beforeEach, describe, expect, it } from "@jest/globals";
+import { IngestService } from "./ingest.service";
 
-describe('IngestService sampler', () => {
+describe("IngestService sampler", () => {
   const baseDir = resolve(
     process.cwd(),
-    '.tmp-tests',
+    ".tmp-tests",
     `ingest-sampler-${Date.now()}`,
   );
 
@@ -14,33 +14,33 @@ describe('IngestService sampler', () => {
     process.env.DATA_DIR = baseDir;
     rmSync(baseDir, { recursive: true, force: true });
     if (!existsSync(baseDir))
-      mkdirSync(resolve(baseDir, 'canonical'), { recursive: true });
+      mkdirSync(resolve(baseDir, "canonical"), { recursive: true });
   });
 
   afterAll(() => {
     rmSync(baseDir, { recursive: true, force: true });
   });
 
-  it('samples linestring near fixed spacing and preserves route end as final sample', () => {
-    const routeId = 'synthetic-line';
+  it("samples linestring near fixed spacing and preserves route end as final sample", () => {
+    const routeId = "synthetic-line";
     const canonicalPath = resolve(
       baseDir,
-      'canonical',
+      "canonical",
       `route-${routeId}.geojson`,
     );
 
     const lineString = {
-      type: 'FeatureCollection',
+      type: "FeatureCollection",
       features: [
         {
-          type: 'Feature',
+          type: "Feature",
           properties: {
             shape_id: routeId,
-            route_id: 'R1',
-            route_name: 'Synthetic',
+            route_id: "R1",
+            route_name: "Synthetic",
           },
           geometry: {
-            type: 'LineString',
+            type: "LineString",
             coordinates: [
               [0, 0],
               [0.001, 0],
@@ -58,7 +58,7 @@ describe('IngestService sampler', () => {
     expect(result.sampleCount).toBeGreaterThan(2);
     expect(existsSync(result.outputPath)).toBe(true);
 
-    const output = JSON.parse(readFileSync(result.outputPath, 'utf-8'));
+    const output = JSON.parse(readFileSync(result.outputPath, "utf-8"));
     const samples = output.samples as Array<{
       lat: number;
       lng: number;
@@ -81,7 +81,7 @@ describe('IngestService sampler', () => {
 
     const lastSample = samples[samples.length - 1];
     if (!lastSample) {
-      throw new Error('Expected at least one sample point');
+      throw new Error("Expected at least one sample point");
     }
 
     expect(lastSample.lng).toBeCloseTo(0.001, 6);
