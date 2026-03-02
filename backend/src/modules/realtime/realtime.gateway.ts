@@ -5,16 +5,16 @@ import {
   OnGatewayInit,
   OnGatewayConnection,
   OnGatewayDisconnect,
-} from "@nestjs/websockets";
-import { Server, Socket } from "socket.io";
-import { Injectable, Inject } from "@nestjs/common";
-import { CACHE_MANAGER } from "@nestjs/cache-manager";
-import { Cache } from "cache-manager";
-import { createClient, RedisClientType } from "redis";
-import { z } from "zod";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { AgentTrace } from "../../entities/agent-trace.entity";
+} from '@nestjs/websockets';
+import { Server, Socket } from 'socket.io';
+import { Injectable, Inject } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
+import { createClient, RedisClientType } from 'redis';
+import { z } from 'zod';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { AgentTrace } from '../../entities/agent-trace.entity';
 
 interface CachedDeparture {
   id: string;
@@ -30,7 +30,7 @@ interface CachedDeparture {
 
 const AgentLocationUpdateSchema = z.object({
   id: z.string().min(1),
-  type: z.literal("agent.location.update").optional(),
+  type: z.literal('agent.location.update').optional(),
   routeId: z.string().min(1).optional(),
   agentId: z.string().min(1).optional(),
   status: z.string().optional(),
@@ -48,7 +48,7 @@ type AgentLocationUpdatePayload = z.infer<typeof AgentLocationUpdateSchema>;
 @Injectable()
 @WebSocketGateway({
   cors: {
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   },
 })
 export class RealtimeGateway
@@ -60,21 +60,21 @@ export class RealtimeGateway
   private departureIntervals = new Map<string, NodeJS.Timeout>();
   private stationSubscriptions = new Map<string, Set<string>>();
   private redisClient: RedisClientType | null = null;
-  private readonly tracesEnabled = process.env.ENABLE_TRACES === "true";
+  private readonly tracesEnabled = process.env.ENABLE_TRACES === 'true';
 
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     @InjectRepository(AgentTrace)
     private readonly agentTraceRepository: Repository<AgentTrace>,
   ) {
-    console.log("RealtimeGateway initialized with cache support");
+    console.log('RealtimeGateway initialized with cache support');
   }
 
   afterInit() {
-    console.log("WebSocket initialized with real-time caching");
+    console.log('WebSocket initialized with real-time caching');
     // Initialize Redis client asynchronously without blocking startup
     this.initializeRedisClient().catch((error) => {
-      console.error("Redis initialization error:", error);
+      console.error('Redis initialization error:', error);
     });
   }
 
@@ -100,7 +100,7 @@ export class RealtimeGateway
   /**
    * Subscribe to departures for a specific station
    */
-  @SubscribeMessage("subscribe:departures")
+  @SubscribeMessage('subscribe:departures')
   async handleSubscribeDepartures(client: Socket, data: { stationId: string }) {
     const { stationId } = data;
 
@@ -116,7 +116,7 @@ export class RealtimeGateway
     // Send cached departures if available
     const cachedDepartures = await this.getCachedDepartures(stationId);
     if (cachedDepartures.length > 0) {
-      client.emit("departures:update", {
+      client.emit('departures:update', {
         stationId,
         departures: cachedDepartures,
         cached: true,
@@ -132,7 +132,7 @@ export class RealtimeGateway
     const interval = setInterval(async () => {
       if (client.connected) {
         const departures = await this.getCachedDepartures(stationId);
-        client.emit("departures:update", {
+        client.emit('departures:update', {
           stationId,
           departures,
           timestamp: new Date().toISOString(),
@@ -149,7 +149,7 @@ export class RealtimeGateway
   /**
    * Unsubscribe from station departures
    */
-  @SubscribeMessage("unsubscribe:departures")
+  @SubscribeMessage('unsubscribe:departures')
   handleUnsubscribeDepartures(client: Socket, data: { stationId: string }) {
     const { stationId } = data;
     const subscriptions = this.stationSubscriptions.get(client.id);
@@ -181,7 +181,7 @@ export class RealtimeGateway
         return cached;
       }
     } catch (error) {
-      console.error("Cache retrieval error:", error);
+      console.error('Cache retrieval error:', error);
     }
 
     // Return mock data if cache miss (in production, fetch from API)
@@ -199,13 +199,13 @@ export class RealtimeGateway
       await this.cacheManager.set(cacheKey, departures, 5 * 60 * 1000);
 
       // Broadcast to all subscribed clients
-      this.server.emit("departures:updated", {
+      this.server.emit('departures:updated', {
         stationId,
         departures,
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
-      console.error("Cache update error:", error);
+      console.error('Cache update error:', error);
     }
   }
 
@@ -218,69 +218,69 @@ export class RealtimeGateway
       {
         id: `${stationId}-1`,
         stationId,
-        lineNumber: "U6",
-        direction: "Alt-Tegel",
+        lineNumber: 'U6',
+        direction: 'Alt-Tegel',
         departureTime: new Date(now + 2 * 60000),
         delayMinutes: 1,
-        platform: "A",
+        platform: 'A',
         realtime: true,
         timestamp: now,
       },
       {
         id: `${stationId}-2`,
         stationId,
-        lineNumber: "S1",
-        direction: "Frohnau",
+        lineNumber: 'S1',
+        direction: 'Frohnau',
         departureTime: new Date(now + 5 * 60000),
         delayMinutes: 0,
-        platform: "B",
+        platform: 'B',
         realtime: true,
         timestamp: now,
       },
       {
         id: `${stationId}-3`,
         stationId,
-        lineNumber: "RE3",
-        direction: "Stralsund",
+        lineNumber: 'RE3',
+        direction: 'Stralsund',
         departureTime: new Date(now + 8 * 60000),
         delayMinutes: -2,
-        platform: "5",
+        platform: '5',
         realtime: false,
         timestamp: now,
       },
     ];
   }
 
-  @SubscribeMessage("subscribe")
+  @SubscribeMessage('subscribe')
   handleSubscribe(client: Socket, data: any) {
     console.log(
       `Client ${client.id} subscribed to ${data.channel} (handleSubscribe)`,
     );
     client.join(data.channel);
-    return { status: "subscribed", channel: data.channel };
+    return { status: 'subscribed', channel: data.channel };
   }
 
-  @SubscribeMessage("unsubscribe")
+  @SubscribeMessage('unsubscribe')
   handleUnsubscribe(client: Socket, data: any) {
     console.log(
       `Client ${client.id} unsubscribed from ${data.channel} (handleUnsubscribe)`,
     );
     client.leave(data.channel);
-    return { status: "unsubscribed", channel: data.channel };
+    return { status: 'unsubscribed', channel: data.channel };
   }
 
   broadcastUpdate(channel: string, data: any) {
     console.log(`Broadcasting update to channel: ${channel}`);
-    this.server.to(channel).emit("update", data);
+    this.server.to(channel).emit('update', data);
   }
 
   emitAgentLocationUpdate(payload: Record<string, any>) {
-    return this.processAgentLocationUpdate(payload, "internal");
+    return this.processAgentLocationUpdate(payload, 'internal');
   }
 
-  @SubscribeMessage("agent.location.update")
+  @SubscribeMessage('agent.location.update')
   async handleAgentLocationUpdate(client: Socket, payload: unknown) {
-    const clientId = client?.id || "unknown";
+    const clientId = client?.id || 'unknown';
     return this.processAgentLocationUpdate(payload, clientId);
   }
 
@@ -288,19 +288,19 @@ export class RealtimeGateway
     const parsedPayload = AgentLocationUpdateSchema.safeParse(payload);
 
     if (!parsedPayload.success) {
-      console.warn("Rejected agent.location.update payload", {
+      console.warn('Rejected agent.location.update payload', {
         source,
         reason: parsedPayload.error.flatten(),
       });
       return {
         ok: false,
-        error: "Invalid payload",
+        error: 'Invalid payload',
       };
     }
 
     const validatedPayload: AgentLocationUpdatePayload = {
       ...parsedPayload.data,
-      type: "agent.location.update",
+      type: 'agent.location.update',
       timestamp: parsedPayload.data.timestamp || new Date().toISOString(),
     };
 
@@ -310,7 +310,7 @@ export class RealtimeGateway
       await this.persistTrace(validatedPayload);
     }
 
-    this.server.emit("agent.location.update", validatedPayload);
+    this.server.emit('agent.location.update', validatedPayload);
 
     return {
       ok: true,
@@ -321,20 +321,20 @@ export class RealtimeGateway
   private async initializeRedisClient() {
     const redisUrl = process.env.REDIS_URL;
     if (!redisUrl) {
-      console.warn("REDIS_URL is not set; latest-state writes are disabled");
+      console.warn('REDIS_URL is not set; latest-state writes are disabled');
       return;
     }
 
     this.redisClient = createClient({ url: redisUrl });
-    this.redisClient.on("error", (error) => {
-      console.error("Redis client error", error);
+    this.redisClient.on('error', (error) => {
+      console.error('Redis client error', error);
     });
 
     try {
       await this.redisClient.connect();
-      console.log("Redis client connected for latest-state writes");
+      console.log('Redis client connected for latest-state writes');
     } catch (error) {
-      console.error("Failed to connect Redis client", error);
+      console.error('Failed to connect Redis client', error);
       this.redisClient = null;
     }
   }
@@ -344,19 +344,22 @@ export class RealtimeGateway
       return;
     }
 
-    const key = `agent:latest:${payload.id}`;
+    const agentId = payload.agentId || payload.id;
+    const key = `agent:latest:${agentId}`;
     await this.redisClient.set(key, JSON.stringify(payload));
   }
 
   private async persistTrace(payload: AgentLocationUpdatePayload) {
+    const agentId = payload.agentId || payload.id;
+
     try {
       await this.agentTraceRepository.insert({
-        agentId: payload.id,
+        agentId,
         payload,
       });
     } catch (error) {
-      console.error("Trace persistence failed for agent.location.update", {
-        agentId: payload.id,
+      console.error('Trace persistence failed for agent.location.update', {
+        agentId,
         error,
       });
     }

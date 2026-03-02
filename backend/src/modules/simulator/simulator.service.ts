@@ -3,11 +3,11 @@ import {
   Injectable,
   Logger,
   NotFoundException,
-} from "@nestjs/common";
-import { randomUUID } from "crypto";
-import { existsSync, readFileSync } from "fs";
-import { isAbsolute, resolve } from "path";
-import { RealtimeGateway } from "../realtime/realtime.gateway";
+} from '@nestjs/common';
+import { randomUUID } from 'crypto';
+import { existsSync, readFileSync } from 'fs';
+import { isAbsolute, resolve } from 'path';
+import { RealtimeGateway } from '../realtime/realtime.gateway';
 
 type TestEmitInput = {
   routeId?: string;
@@ -35,7 +35,7 @@ type RouteSamplePoint = {
   bearing: number;
 };
 
-type SimulationJobStatus = "running" | "completed" | "failed";
+type SimulationJobStatus = 'running' | 'completed' | 'failed';
 
 type SimulationJob = {
   jobId: string;
@@ -66,7 +66,7 @@ export class SimulatorService {
   startSimulation(input: StartSimulationInput) {
     const routeId = input.routeId?.trim();
     if (!routeId) {
-      throw new BadRequestException("routeId is required.");
+      throw new BadRequestException('routeId is required.');
     }
 
     const intervalMs =
@@ -94,7 +94,7 @@ export class SimulatorService {
     const job: SimulationJob = {
       jobId,
       routeId,
-      status: "running",
+      status: 'running',
       createdAt: now,
       updatedAt: now,
       config: {
@@ -114,7 +114,7 @@ export class SimulatorService {
     const timer = setInterval(() => {
       try {
         const activeJob = this.jobs.get(jobId);
-        if (!activeJob || activeJob.status !== "running") {
+        if (!activeJob || activeJob.status !== 'running') {
           this.stopTimer(jobId);
           return;
         }
@@ -124,6 +124,7 @@ export class SimulatorService {
         let completedAgents = 0;
 
         for (let agentIndex = 0; agentIndex < agents; agentIndex += 1) {
+          const agentId = `${jobId}-${agentIndex + 1}`;
           const offset = Math.floor((agentIndex * samples.length) / agents);
           const absoluteIndex = tick + offset;
 
@@ -146,15 +147,16 @@ export class SimulatorService {
           );
           const locationTs = new Date(baseTs + agentIndex * 250).toISOString();
           const payload = {
-            id: `${jobId}-${agentIndex + 1}-${sample.seq}-${baseTs}`,
-            type: "agent.location.update",
+            id: agentId,
+            agentId,
+            type: 'agent.location.update',
             routeId,
             location: {
               lat: Number(jittered.lat.toFixed(6)),
               lng: Number(jittered.lng.toFixed(6)),
               ts: locationTs,
             },
-            status: "active",
+            status: 'active',
             meta: {
               speedKph,
               bearing: sample.bearing,
@@ -173,7 +175,7 @@ export class SimulatorService {
         tick += 1;
 
         if (!loop && completedAgents >= agents) {
-          activeJob.status = "completed";
+          activeJob.status = 'completed';
           activeJob.updatedAt = new Date().toISOString();
           this.jobs.set(jobId, activeJob);
           this.stopTimer(jobId);
@@ -181,9 +183,9 @@ export class SimulatorService {
       } catch (error) {
         const activeJob = this.jobs.get(jobId);
         if (activeJob) {
-          activeJob.status = "failed";
+          activeJob.status = 'failed';
           activeJob.error =
-            error instanceof Error ? error.message : "Unknown simulator error";
+            error instanceof Error ? error.message : 'Unknown simulator error';
           activeJob.updatedAt = new Date().toISOString();
           this.jobs.set(jobId, activeJob);
         }
@@ -222,14 +224,14 @@ export class SimulatorService {
     const locationTs = new Date().toISOString();
     const payload = {
       id: `test-${Date.now()}`,
-      type: "agent.location.update",
-      routeId: input.routeId || "test-route",
+      type: 'agent.location.update',
+      routeId: input.routeId || 'test-route',
       location: {
         lat: Number.isFinite(input.lat) ? input.lat : 52.52,
         lng: Number.isFinite(input.lng) ? input.lng : 13.405,
         ts: locationTs,
       },
-      status: "active",
+      status: 'active',
       meta: {
         speedKph: Number.isFinite(input.speed) ? input.speed : 8.5,
         bearing: 0,
@@ -242,20 +244,20 @@ export class SimulatorService {
 
     return {
       ok: true,
-      event: "agent.location.update",
+      event: 'agent.location.update',
       emitted,
     };
   }
 
   private loadSamples(routeId: string): RouteSamplePoint[] {
-    const dataDir = process.env.DATA_DIR || "./data";
+    const dataDir = process.env.DATA_DIR || './data';
     const absoluteDataDir = isAbsolute(dataDir)
       ? dataDir
       : resolve(process.cwd(), dataDir);
     const safeRouteId = this.safeFileSegment(routeId);
     const samplePath = resolve(
       absoluteDataDir,
-      "samples",
+      'samples',
       `route-${safeRouteId}-samples.json`,
     );
 
@@ -265,7 +267,7 @@ export class SimulatorService {
       );
     }
 
-    const parsed = JSON.parse(readFileSync(samplePath, "utf-8"));
+    const parsed = JSON.parse(readFileSync(samplePath, 'utf-8'));
     const samples = Array.isArray(parsed?.samples)
       ? (parsed.samples as RouteSamplePoint[])
       : [];
@@ -315,9 +317,9 @@ export class SimulatorService {
     return (
       value
         .trim()
-        .replace(/[^a-zA-Z0-9_-]+/g, "-")
-        .replace(/-+/g, "-")
-        .replace(/^-|-$/g, "") || "route"
+        .replace(/[^a-zA-Z0-9_-]+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '') || 'route'
     );
   }
 }

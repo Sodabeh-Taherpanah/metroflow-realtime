@@ -3,11 +3,11 @@ import {
   Logger,
   OnModuleDestroy,
   OnModuleInit,
-} from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { createClient, RedisClientType } from "redis";
-import { AgentTrace } from "../../entities/agent-trace.entity";
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { createClient, RedisClientType } from 'redis';
+import { AgentTrace } from '../../entities/agent-trace.entity';
 
 type AgentHistoryOptions = {
   page: number;
@@ -28,19 +28,19 @@ export class TrackingService implements OnModuleInit, OnModuleDestroy {
     const redisUrl = process.env.REDIS_URL;
     if (!redisUrl) {
       this.logger.warn(
-        "REDIS_URL is not set; tracking latest-state endpoint will return empty data",
+        'REDIS_URL is not set; tracking latest-state endpoint will return empty data',
       );
       return;
     }
 
     this.redisClient = createClient({ url: redisUrl });
-    this.redisClient.on("error", (error) => {
+    this.redisClient.on('error', (error) => {
       this.logger.error(`Redis tracking client error: ${error}`);
     });
 
     try {
       await this.redisClient.connect();
-      this.logger.log("Tracking Redis client connected");
+      this.logger.log('Tracking Redis client connected');
     } catch (error) {
       this.logger.error(`Failed to connect tracking Redis client: ${error}`);
       this.redisClient = null;
@@ -60,10 +60,10 @@ export class TrackingService implements OnModuleInit, OnModuleDestroy {
 
     const keys: string[] = [];
     for await (const key of this.redisClient.scanIterator({
-      MATCH: "agent:latest:*",
+      MATCH: 'agent:latest:*',
       COUNT: 100,
     })) {
-      if (typeof key === "string") {
+      if (typeof key === 'string') {
         keys.push(key);
       }
     }
@@ -83,9 +83,9 @@ export class TrackingService implements OnModuleInit, OnModuleDestroy {
 
       try {
         const parsed = JSON.parse(rawValue) as Record<string, unknown>;
-        if (!parsed.id) {
-          parsed.id = key.replace("agent:latest:", "");
-        }
+        const fallbackAgentId = key.replace('agent:latest:', '');
+        parsed.agentId = parsed.agentId || fallbackAgentId;
+        parsed.id = parsed.id || parsed.agentId;
         latestAgents.push(parsed);
       } catch {
         this.logger.warn(`Skipping invalid JSON for key ${key}`);
@@ -102,7 +102,7 @@ export class TrackingService implements OnModuleInit, OnModuleDestroy {
 
     const [items, total] = await this.agentTraceRepository.findAndCount({
       where: { agentId },
-      order: { createdAt: "DESC" },
+      order: { createdAt: 'DESC' },
       skip,
       take: limit,
     });
