@@ -1,4 +1,4 @@
-import { SimulatorService } from "./simulator.service";
+import { SimulatorService } from './simulator.service';
 declare class TestEmitDto {
     routeId?: string;
     agentId?: string;
@@ -22,7 +22,7 @@ export declare class SimulatorController {
         jobs: {
             jobId: string;
             routeId: string;
-            status: "completed" | "running" | "failed";
+            status: "running" | "completed" | "failed";
             createdAt: string;
             updatedAt: string;
             config: {
@@ -40,7 +40,7 @@ export declare class SimulatorController {
     getJob(jobId: string): {
         jobId: string;
         routeId: string;
-        status: "completed" | "running" | "failed";
+        status: "running" | "completed" | "failed";
         createdAt: string;
         updatedAt: string;
         config: {
@@ -56,7 +56,7 @@ export declare class SimulatorController {
     };
     start(body: StartSimulatorDto): {
         jobId: `${string}-${string}-${string}-${string}-${string}`;
-        status: "completed" | "running" | "failed";
+        status: "running" | "completed" | "failed";
         routeId: string;
         config: {
             intervalMs: number;
@@ -77,18 +77,18 @@ export declare class SimulatorController {
         } | {
             ok: boolean;
             payload: {
-                type?: "agent.location.update";
-                timestamp?: string;
                 id?: string;
+                type?: "agent.location.update";
+                routeId?: string;
+                agentId?: string;
+                status?: string;
                 location?: {
                     lat?: number;
                     lng?: number;
                     ts?: string;
                 };
-                agentId?: string;
-                routeId?: string;
-                status?: string;
                 meta?: Record<string, any>;
+                timestamp?: string;
             };
             error?: undefined;
         }>;

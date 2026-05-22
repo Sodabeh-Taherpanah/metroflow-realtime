@@ -1,4 +1,4 @@
-import { VbbService, VbbLocation } from "./vbb.service";
+import { VbbService, VbbLocation } from './vbb.service';
 export declare class VbbController {
     private readonly vbbService;
     constructor(vbbService: VbbService);

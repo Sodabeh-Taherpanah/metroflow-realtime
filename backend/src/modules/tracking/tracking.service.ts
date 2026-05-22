@@ -18,6 +18,15 @@ type AgentHistoryOptions = {
 export class TrackingService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(TrackingService.name);
   private redisClient: RedisClientType | null = null;
+  private cleanupTimer: NodeJS.Timeout | null = null;
+  private readonly traceRetentionDays = Math.max(
+    1,
+    Number(process.env.TRACE_RETENTION_DAYS || 7),
+  );
+  private readonly cleanupIntervalMs = Math.max(
+    60_000,
+    Number(process.env.TRACE_CLEANUP_INTERVAL_MS || 60 * 60 * 1000),
+  );
 
   constructor(
     @InjectRepository(AgentTrace)
@@ -45,11 +54,46 @@ export class TrackingService implements OnModuleInit, OnModuleDestroy {
       this.logger.error(`Failed to connect tracking Redis client: ${error}`);
       this.redisClient = null;
     }
+
+    this.cleanupTimer = setInterval(() => {
+      this.cleanupOldTraces().catch((error) => {
+        this.logger.error(`Trace cleanup failed: ${error}`);
+      });
+    }, this.cleanupIntervalMs);
+
+    this.cleanupOldTraces().catch((error) => {
+      this.logger.error(`Initial trace cleanup failed: ${error}`);
+    });
   }
 
   async onModuleDestroy() {
+    if (this.cleanupTimer) {
+      clearInterval(this.cleanupTimer);
+      this.cleanupTimer = null;
+    }
+
     if (this.redisClient?.isOpen) {
       await this.redisClient.quit();
+    }
+  }
+
+  private async cleanupOldTraces() {
+    const cutoff = new Date(
+      Date.now() - this.traceRetentionDays * 24 * 60 * 60 * 1000,
+    );
+
+    const result = await this.agentTraceRepository
+      .createQueryBuilder()
+      .delete()
+      .from(AgentTrace)
+      .where('"createdAt" < :cutoff', { cutoff })
+      .execute();
+
+    const deleted = result.affected || 0;
+    if (deleted > 0) {
+      this.logger.log(
+        `Trace retention cleanup removed ${deleted} rows older than ${this.traceRetentionDays} day(s)`,
+      );
     }
   }
 
@@ -93,6 +137,30 @@ export class TrackingService implements OnModuleInit, OnModuleDestroy {
     });
 
     return latestAgents;
+  }
+
+  async getSummary() {
+    const agentCount = await this.getLatestAgents()
+      .then((a) => a.length)
+      .catch(() => 0);
+
+    // Hourly event counts for the last 24 hours from AgentTrace
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const raw = await this.agentTraceRepository
+      .createQueryBuilder('t')
+      .select(`date_trunc('hour', t."createdAt")`, 'hour')
+      .addSelect('COUNT(*)', 'count')
+      .where('t."createdAt" >= :since', { since })
+      .groupBy(`date_trunc('hour', t."createdAt")`)
+      .orderBy(`date_trunc('hour', t."createdAt")`, 'ASC')
+      .getRawMany<{ hour: string; count: string }>();
+
+    const hourlyActivity = raw.map((r) => ({
+      hour: r.hour,
+      count: parseInt(r.count, 10),
+    }));
+
+    return { agentCount, hourlyActivity };
   }
 
   async getAgentHistory(agentId: string, options: AgentHistoryOptions) {

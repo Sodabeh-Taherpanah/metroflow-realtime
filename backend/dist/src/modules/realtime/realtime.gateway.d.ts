@@ -3,26 +3,17 @@ import { Server, Socket } from 'socket.io';
 import { Cache } from 'cache-manager';
 import { Repository } from 'typeorm';
 import { AgentTrace } from '../../entities/agent-trace.entity';
-interface CachedDeparture {
-    id: string;
-    stationId: string;
-    lineNumber: string;
-    direction: string;
-    departureTime: Date;
-    delayMinutes: number;
-    platform?: string;
-    realtime: boolean;
-    timestamp: number;
-}
+import { VbbService } from '../../vbb/vbb.service';
 export declare class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
     private cacheManager;
     private readonly agentTraceRepository;
+    private readonly vbbService;
     server: Server;
     private departureIntervals;
     private stationSubscriptions;
     private redisClient;
     private readonly tracesEnabled;
-    constructor(cacheManager: Cache, agentTraceRepository: Repository<AgentTrace>);
+    constructor(cacheManager: Cache, agentTraceRepository: Repository<AgentTrace>, vbbService: VbbService);
     afterInit(): void;
     handleConnection(client: Socket): void;
     handleDisconnect(client: Socket): void;
@@ -33,7 +24,7 @@ export declare class RealtimeGateway implements OnGatewayInit, OnGatewayConnecti
         stationId: string;
     }): void;
     private getCachedDepartures;
-    updateDepartures(stationId: string, departures: CachedDeparture[]): Promise<void>;
+    updateDepartures(stationId: string, departures: unknown[]): Promise<void>;
     private generateMockDepartures;
     handleSubscribe(client: Socket, data: any): {
         status: string;
@@ -51,18 +42,18 @@ export declare class RealtimeGateway implements OnGatewayInit, OnGatewayConnecti
     } | {
         ok: boolean;
         payload: {
-            type?: "agent.location.update";
-            timestamp?: string;
             id?: string;
+            type?: "agent.location.update";
+            routeId?: string;
+            agentId?: string;
+            status?: string;
             location?: {
                 lat?: number;
                 lng?: number;
                 ts?: string;
             };
-            agentId?: string;
-            routeId?: string;
-            status?: string;
             meta?: Record<string, any>;
+            timestamp?: string;
         };
         error?: undefined;
     }>;
@@ -73,18 +64,18 @@ export declare class RealtimeGateway implements OnGatewayInit, OnGatewayConnecti
     } | {
         ok: boolean;
         payload: {
-            type?: "agent.location.update";
-            timestamp?: string;
             id?: string;
+            type?: "agent.location.update";
+            routeId?: string;
+            agentId?: string;
+            status?: string;
             location?: {
                 lat?: number;
                 lng?: number;
                 ts?: string;
             };
-            agentId?: string;
-            routeId?: string;
-            status?: string;
             meta?: Record<string, any>;
+            timestamp?: string;
         };
         error?: undefined;
     }>;
@@ -93,4 +84,3 @@ export declare class RealtimeGateway implements OnGatewayInit, OnGatewayConnecti
     private writeLatestState;
     private persistTrace;
 }
-export {};

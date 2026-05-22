@@ -19,32 +19,32 @@ let VbbController = class VbbController {
     constructor(vbbService) {
         this.vbbService = vbbService;
     }
-    async getStations(query = "Berlin", limit = 10) {
+    async getStations(query = 'Berlin', limit = 10) {
         return this.vbbService.getStations(query, limit);
     }
-    async getDepartures(stationId = "900029305", duration = 60) {
+    async getDepartures(stationId = '900029305', duration = 60) {
         return this.vbbService.getDepartures(stationId, duration);
     }
 };
 exports.VbbController = VbbController;
 __decorate([
-    (0, common_1.Get)("stations"),
-    __param(0, (0, common_1.Query)("query")),
-    __param(1, (0, common_1.Query)("limit")),
+    (0, common_1.Get)('stations'),
+    __param(0, (0, common_1.Query)('query')),
+    __param(1, (0, common_1.Query)('limit')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Number]),
     __metadata("design:returntype", Promise)
 ], VbbController.prototype, "getStations", null);
 __decorate([
-    (0, common_1.Get)("departures"),
-    __param(0, (0, common_1.Query)("stationId")),
-    __param(1, (0, common_1.Query)("duration")),
+    (0, common_1.Get)('departures'),
+    __param(0, (0, common_1.Query)('stationId')),
+    __param(1, (0, common_1.Query)('duration')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Number]),
     __metadata("design:returntype", Promise)
 ], VbbController.prototype, "getDepartures", null);
 exports.VbbController = VbbController = __decorate([
-    (0, common_1.Controller)("vbb"),
+    (0, common_1.Controller)('api/vbb'),
     __metadata("design:paramtypes", [vbb_service_1.VbbService])
 ], VbbController);
 //# sourceMappingURL=vbb.controller.js.map

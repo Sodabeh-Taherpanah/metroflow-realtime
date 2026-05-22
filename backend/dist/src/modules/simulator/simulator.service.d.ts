@@ -64,18 +64,18 @@ export declare class SimulatorService {
         } | {
             ok: boolean;
             payload: {
-                type?: "agent.location.update";
-                timestamp?: string;
                 id?: string;
+                type?: "agent.location.update";
+                routeId?: string;
+                agentId?: string;
+                status?: string;
                 location?: {
                     lat?: number;
                     lng?: number;
                     ts?: string;
                 };
-                agentId?: string;
-                routeId?: string;
-                status?: string;
                 meta?: Record<string, any>;
+                timestamp?: string;
             };
             error?: undefined;
         }>;

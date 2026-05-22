@@ -15,18 +15,7 @@ import { z } from 'zod';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AgentTrace } from '../../entities/agent-trace.entity';
-
-interface CachedDeparture {
-  id: string;
-  stationId: string;
-  lineNumber: string;
-  direction: string;
-  departureTime: Date;
-  delayMinutes: number;
-  platform?: string;
-  realtime: boolean;
-  timestamp: number;
-}
+import { VbbService } from '../../vbb/vbb.service';
 
 const AgentLocationUpdateSchema = z.object({
   id: z.string().min(1),
@@ -66,6 +55,7 @@ export class RealtimeGateway
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     @InjectRepository(AgentTrace)
     private readonly agentTraceRepository: Repository<AgentTrace>,
+    private readonly vbbService: VbbService,
   ) {
     console.log('RealtimeGateway initialized with cache support');
   }
@@ -168,15 +158,13 @@ export class RealtimeGateway
   }
 
   /**
-   * Get cached departures for a station
+   * Get cached departures for a station — fetches from VBB API on cache miss
    */
-  private async getCachedDepartures(
-    stationId: string,
-  ): Promise<CachedDeparture[]> {
+  private async getCachedDepartures(stationId: string): Promise<unknown[]> {
     const cacheKey = `departures:${stationId}`;
 
     try {
-      const cached = await this.cacheManager.get<CachedDeparture[]>(cacheKey);
+      const cached = await this.cacheManager.get<unknown[]>(cacheKey);
       if (cached) {
         return cached;
       }
@@ -184,14 +172,31 @@ export class RealtimeGateway
       console.error('Cache retrieval error:', error);
     }
 
-    // Return mock data if cache miss (in production, fetch from API)
+    // Fetch from VBB API
+    try {
+      const departures = await this.vbbService.getDepartures(stationId);
+      if (Array.isArray(departures) && departures.length > 0) {
+        // Cache for 60 seconds
+        await this.cacheManager
+          .set(cacheKey, departures, 60 * 1000)
+          .catch(() => {});
+        return departures;
+      }
+    } catch (error) {
+      console.error(
+        `VBB departures fetch failed for station ${stationId}:`,
+        error,
+      );
+    }
+
+    // Fallback mock in VBB API format
     return this.generateMockDepartures(stationId);
   }
 
   /**
    * Update departures cache (called by API/service)
    */
-  async updateDepartures(stationId: string, departures: CachedDeparture[]) {
+  async updateDepartures(stationId: string, departures: unknown[]) {
     const cacheKey = `departures:${stationId}`;
 
     try {
@@ -210,43 +215,34 @@ export class RealtimeGateway
   }
 
   /**
-   * Generate mock departures for testing
+   * Generate mock departures in VBB API format (fallback when VBB is unreachable)
    */
-  private generateMockDepartures(stationId: string): CachedDeparture[] {
-    const now = Date.now();
+  private generateMockDepartures(stationId: string): unknown[] {
+    const now = new Date();
     return [
       {
-        id: `${stationId}-1`,
-        stationId,
-        lineNumber: 'U6',
+        tripId: `${stationId}-trip-1`,
+        stop: { id: stationId, name: 'Berlin, Staaken Bhf' },
+        when: new Date(now.getTime() + 2 * 60000).toISOString(),
+        plannedWhen: new Date(now.getTime() + 2 * 60000).toISOString(),
         direction: 'Alt-Tegel',
-        departureTime: new Date(now + 2 * 60000),
-        delayMinutes: 1,
-        platform: 'A',
-        realtime: true,
-        timestamp: now,
+        line: { name: 'U6', id: 'u6' },
       },
       {
-        id: `${stationId}-2`,
-        stationId,
-        lineNumber: 'S1',
+        tripId: `${stationId}-trip-2`,
+        stop: { id: stationId, name: 'Berlin, Staaken Bhf' },
+        when: new Date(now.getTime() + 5 * 60000).toISOString(),
+        plannedWhen: new Date(now.getTime() + 5 * 60000).toISOString(),
         direction: 'Frohnau',
-        departureTime: new Date(now + 5 * 60000),
-        delayMinutes: 0,
-        platform: 'B',
-        realtime: true,
-        timestamp: now,
+        line: { name: 'S1', id: 's1' },
       },
       {
-        id: `${stationId}-3`,
-        stationId,
-        lineNumber: 'RE3',
+        tripId: `${stationId}-trip-3`,
+        stop: { id: stationId, name: 'Berlin, Staaken Bhf' },
+        when: new Date(now.getTime() + 8 * 60000).toISOString(),
+        plannedWhen: new Date(now.getTime() + 10 * 60000).toISOString(),
         direction: 'Stralsund',
-        departureTime: new Date(now + 8 * 60000),
-        delayMinutes: -2,
-        platform: '5',
-        realtime: false,
-        timestamp: now,
+        line: { name: 'RE3', id: 're3' },
       },
     ];
   }

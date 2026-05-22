@@ -24,6 +24,9 @@ let TrackingService = TrackingService_1 = class TrackingService {
         this.agentTraceRepository = agentTraceRepository;
         this.logger = new common_1.Logger(TrackingService_1.name);
         this.redisClient = null;
+        this.cleanupTimer = null;
+        this.traceRetentionDays = Math.max(1, Number(process.env.TRACE_RETENTION_DAYS || 7));
+        this.cleanupIntervalMs = Math.max(60_000, Number(process.env.TRACE_CLEANUP_INTERVAL_MS || 60 * 60 * 1000));
     }
     async onModuleInit() {
         const redisUrl = process.env.REDIS_URL;
@@ -43,10 +46,35 @@ let TrackingService = TrackingService_1 = class TrackingService {
             this.logger.error(`Failed to connect tracking Redis client: ${error}`);
             this.redisClient = null;
         }
+        this.cleanupTimer = setInterval(() => {
+            this.cleanupOldTraces().catch((error) => {
+                this.logger.error(`Trace cleanup failed: ${error}`);
+            });
+        }, this.cleanupIntervalMs);
+        this.cleanupOldTraces().catch((error) => {
+            this.logger.error(`Initial trace cleanup failed: ${error}`);
+        });
     }
     async onModuleDestroy() {
+        if (this.cleanupTimer) {
+            clearInterval(this.cleanupTimer);
+            this.cleanupTimer = null;
+        }
         if (this.redisClient?.isOpen) {
             await this.redisClient.quit();
+        }
+    }
+    async cleanupOldTraces() {
+        const cutoff = new Date(Date.now() - this.traceRetentionDays * 24 * 60 * 60 * 1000);
+        const result = await this.agentTraceRepository
+            .createQueryBuilder()
+            .delete()
+            .from(agent_trace_entity_1.AgentTrace)
+            .where('"createdAt" < :cutoff', { cutoff })
+            .execute();
+        const deleted = result.affected || 0;
+        if (deleted > 0) {
+            this.logger.log(`Trace retention cleanup removed ${deleted} rows older than ${this.traceRetentionDays} day(s)`);
         }
     }
     async getLatestAgents() {
@@ -84,6 +112,25 @@ let TrackingService = TrackingService_1 = class TrackingService {
             }
         });
         return latestAgents;
+    }
+    async getSummary() {
+        const agentCount = await this.getLatestAgents()
+            .then((a) => a.length)
+            .catch(() => 0);
+        const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const raw = await this.agentTraceRepository
+            .createQueryBuilder('t')
+            .select(`date_trunc('hour', t."createdAt")`, 'hour')
+            .addSelect('COUNT(*)', 'count')
+            .where('t."createdAt" >= :since', { since })
+            .groupBy(`date_trunc('hour', t."createdAt")`)
+            .orderBy(`date_trunc('hour', t."createdAt")`, 'ASC')
+            .getRawMany();
+        const hourlyActivity = raw.map((r) => ({
+            hour: r.hour,
+            count: parseInt(r.count, 10),
+        }));
+        return { agentCount, hourlyActivity };
     }
     async getAgentHistory(agentId, options) {
         const page = Math.max(1, options.page);

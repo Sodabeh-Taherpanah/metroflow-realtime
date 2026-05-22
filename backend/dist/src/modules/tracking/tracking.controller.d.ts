@@ -1,7 +1,14 @@
-import { TrackingService } from "./tracking.service";
+import { TrackingService } from './tracking.service';
 export declare class TrackingController {
     private readonly trackingService;
     constructor(trackingService: TrackingService);
+    getSummary(): Promise<{
+        agentCount: number;
+        hourlyActivity: {
+            hour: string;
+            count: number;
+        }[];
+    }>;
     getAgents(): Promise<Record<string, unknown>[]>;
     getAgentHistory(agentId: string, page?: string, limit?: string): Promise<{
         items: import("../../entities/agent-trace.entity").AgentTrace[];

@@ -1,20 +1,25 @@
-import { Controller, Get, Param, Query } from "@nestjs/common";
-import { TrackingService } from "./tracking.service";
+import { Controller, Get, Param, Query } from '@nestjs/common';
+import { TrackingService } from './tracking.service';
 
-@Controller("api/tracking")
+@Controller('api/tracking')
 export class TrackingController {
   constructor(private readonly trackingService: TrackingService) {}
 
-  @Get("agents")
+  @Get('summary')
+  getSummary() {
+    return this.trackingService.getSummary();
+  }
+
+  @Get('agents')
   getAgents() {
     return this.trackingService.getLatestAgents();
   }
 
-  @Get("agents/:id/history")
+  @Get('agents/:id/history')
   getAgentHistory(
-    @Param("id") agentId: string,
-    @Query("page") page?: string,
-    @Query("limit") limit?: string,
+    @Param('id') agentId: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
     const pageNumber = Number(page);
     const limitNumber = Number(limit);

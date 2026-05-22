@@ -1,0 +1,58 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "shape_id": "Berlin Sample Route",
+        "route_id": null,
+        "route_name": "Berlin Sample Route"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            13.404954,
+            52.520008
+          ],
+          [
+            13.4085,
+            52.5192
+          ],
+          [
+            13.4121,
+            52.5178
+          ],
+          [
+            13.4159,
+            52.5163
+          ],
+          [
+            13.4201,
+            52.5149
+          ],
+          [
+            13.4243,
+            52.5137
+          ],
+          [
+            13.4288,
+            52.5125
+          ],
+          [
+            13.433,
+            52.5114
+          ],
+          [
+            13.4374,
+            52.5102
+          ],
+          [
+            13.4415,
+            52.509
+          ]
+        ]
+      }
+    }
+  ]
+}

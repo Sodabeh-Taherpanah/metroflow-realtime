@@ -1,36 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MetroFlow Frontend
 
-## Getting Started
+Simple web app for real-time transit monitoring.
 
-First, run the development server:
+This frontend is built with Next.js + TypeScript and connects to the backend through `/api` proxy routes.
+
+## Quick Start
+
+1. Install dependencies
+
+```bash
+npm install
+```
+
+2. Run dev server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3. Open
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- http://localhost:3000
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Web App Flow
 
-## Learn More
+This is the normal page flow in the frontend:
 
-To learn more about Next.js, take a look at the following resources:
+1. Home (`/`)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Entry page and quick navigation to core modules.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+2. Dashboard (`/dashboard`)
 
-## Deploy on Vercel
+- High-level system health and service status.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+3. Map (`/map`)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Live vehicle movement and station view.
+
+4. Departures (`/departures`)
+
+- Station departure board with near real-time updates.
+
+5. Stations (`/stations`)
+
+- Station list and provider status checks.
+
+6. Tracking (`/tracking`)
+
+- Operations workflow:
+- ingest route data,
+- run simulation,
+- inspect logs and active agents.
+
+7. Charts (`/charts`)
+
+- Summary analytics from tracking data (activity and counts).
+
+## How Data Flows
+
+1. Frontend sends requests to `/api/...`.
+2. Next.js rewrites proxy these calls to backend (`http://localhost:3001/api/...`).
+3. Backend returns REST data and websocket updates.
+4. Pages refresh with React Query polling or live events.
+
+## Main Frontend Stack
+
+1. Next.js (App Router)
+2. React Query
+3. Axios API client
+4. Recharts and map components
+
+## Notes
+
+1. Frontend default port: `3000`
+2. Backend default port: `3001`
+3. If API calls fail, first check backend is running and proxy rewrite is correct.

@@ -26,8 +26,8 @@ type RouteArtifact = {
 };
 type ProbeResponse = {
     jobId: string;
-    status: "completed";
-    sourceType: "gtfs" | "gpx";
+    status: 'completed';
+    sourceType: 'gtfs' | 'gpx';
     stats: {
         shapeCount: number;
         pointCount: number;
@@ -41,7 +41,7 @@ type ProbeResponse = {
         canonical: string;
     };
 };
-type ProbeJobStatus = "queued" | "running" | "completed" | "failed";
+type ProbeJobStatus = 'queued' | 'running' | 'completed' | 'failed';
 type ProbeJob = {
     jobId: string;
     status: ProbeJobStatus;
@@ -79,12 +79,24 @@ type RouteSampleOutput = {
 export declare class IngestService {
     private readonly logger;
     private readonly jobs;
+    private readonly jobLogs;
     private readonly defaultTolerance;
     private readonly snapPrecision;
     private readonly defaultSampleSpacingMeters;
     queueProbe(input: ProbeInput): {
         jobId: string;
-        status: "queued";
+        status: 'queued';
+    };
+    getProbeLogs(jobId: string, limit?: number): {
+        jobId: string;
+        lines: string[];
+    };
+    resolveDownloadPath(input: {
+        routeId: string;
+        view?: 'raw' | 'canonical' | 'samples';
+    }): {
+        filePath: string;
+        fileName: string;
     };
     getProbeJob(jobId: string): ProbeJob;
     sampleRoute(input: {
@@ -98,6 +110,7 @@ export declare class IngestService {
         routes: ListedRoute[];
     };
     private processProbeJob;
+    private appendJobLog;
     private probeGtfs;
     private probeGpx;
     private writeArtifacts;

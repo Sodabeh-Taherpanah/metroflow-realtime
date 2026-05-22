@@ -19,6 +19,9 @@ let TrackingController = class TrackingController {
     constructor(trackingService) {
         this.trackingService = trackingService;
     }
+    getSummary() {
+        return this.trackingService.getSummary();
+    }
     getAgents() {
         return this.trackingService.getLatestAgents();
     }
@@ -37,22 +40,28 @@ let TrackingController = class TrackingController {
 };
 exports.TrackingController = TrackingController;
 __decorate([
-    (0, common_1.Get)("agents"),
+    (0, common_1.Get)('summary'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], TrackingController.prototype, "getSummary", null);
+__decorate([
+    (0, common_1.Get)('agents'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], TrackingController.prototype, "getAgents", null);
 __decorate([
-    (0, common_1.Get)("agents/:id/history"),
-    __param(0, (0, common_1.Param)("id")),
-    __param(1, (0, common_1.Query)("page")),
-    __param(2, (0, common_1.Query)("limit")),
+    (0, common_1.Get)('agents/:id/history'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Query)('page')),
+    __param(2, (0, common_1.Query)('limit')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", void 0)
 ], TrackingController.prototype, "getAgentHistory", null);
 exports.TrackingController = TrackingController = __decorate([
-    (0, common_1.Controller)("api/tracking"),
+    (0, common_1.Controller)('api/tracking'),
     __metadata("design:paramtypes", [tracking_service_1.TrackingService])
 ], TrackingController);
 //# sourceMappingURL=tracking.controller.js.map

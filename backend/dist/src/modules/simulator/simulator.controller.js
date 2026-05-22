@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SimulatorController = void 0;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
+const throttler_1 = require("@nestjs/throttler");
 const class_validator_1 = require("class-validator");
 const simulator_service_1 = require("./simulator.service");
 class TestEmitDto {
@@ -93,21 +94,21 @@ let SimulatorController = class SimulatorController {
         return this.simulatorService.getSimulationJob(jobId);
     }
     start(body) {
-        const intervalMs = this.parsePositiveNumber(body.intervalMs, "intervalMs");
-        const agents = this.parsePositiveNumber(body.agents, "agents");
-        const jitterMeters = this.parseNonNegativeNumber(body.jitterMeters, "jitterMeters");
-        const speedKph = this.parsePositiveNumber(body.speedKph, "speedKph");
+        const intervalMs = this.parsePositiveNumber(body.intervalMs, 'intervalMs');
+        const agents = this.parsePositiveNumber(body.agents, 'agents');
+        const jitterMeters = this.parseNonNegativeNumber(body.jitterMeters, 'jitterMeters');
+        const speedKph = this.parsePositiveNumber(body.speedKph, 'speedKph');
         let loop;
         if (body.loop !== undefined) {
             const value = body.loop.trim().toLowerCase();
-            if (value === "true" || value === "1") {
+            if (value === 'true' || value === '1') {
                 loop = true;
             }
-            else if (value === "false" || value === "0") {
+            else if (value === 'false' || value === '0') {
                 loop = false;
             }
             else {
-                throw new common_1.BadRequestException("loop must be true/false.");
+                throw new common_1.BadRequestException('loop must be true/false.');
             }
         }
         return this.simulatorService.startSimulation({
@@ -153,36 +154,38 @@ let SimulatorController = class SimulatorController {
 exports.SimulatorController = SimulatorController;
 __decorate([
     (0, common_1.Get)(),
-    (0, swagger_1.ApiOperation)({ summary: "List simulator jobs" }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: "Simulation job list" }),
+    (0, swagger_1.ApiOperation)({ summary: 'List simulator jobs' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Simulation job list' }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], SimulatorController.prototype, "getStatus", null);
 __decorate([
-    (0, common_1.Get)("jobs/:jobId"),
-    (0, swagger_1.ApiOperation)({ summary: "Get simulator job status" }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: "Simulation job payload" }),
-    __param(0, (0, common_1.Param)("jobId")),
+    (0, common_1.Get)('jobs/:jobId'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get simulator job status' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Simulation job payload' }),
+    __param(0, (0, common_1.Param)('jobId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], SimulatorController.prototype, "getJob", null);
 __decorate([
-    (0, common_1.Post)("start"),
-    (0, swagger_1.ApiOperation)({ summary: "Start simulator replay run" }),
-    (0, swagger_1.ApiResponse)({ status: 201, description: "Simulation started" }),
+    (0, common_1.Post)('start'),
+    (0, throttler_1.Throttle)({ default: { limit: 10, ttl: 60 } }),
+    (0, swagger_1.ApiOperation)({ summary: 'Start simulator replay run' }),
+    (0, swagger_1.ApiResponse)({ status: 201, description: 'Simulation started' }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [StartSimulatorDto]),
     __metadata("design:returntype", void 0)
 ], SimulatorController.prototype, "start", null);
 __decorate([
-    (0, common_1.Post)("test-emit"),
-    (0, swagger_1.ApiOperation)({ summary: "Emit one agent.location.update test event" }),
+    (0, common_1.Post)('test-emit'),
+    (0, throttler_1.Throttle)({ default: { limit: 30, ttl: 60 } }),
+    (0, swagger_1.ApiOperation)({ summary: 'Emit one agent.location.update test event' }),
     (0, swagger_1.ApiResponse)({
         status: 200,
-        description: "Event emitted to websocket gateway",
+        description: 'Event emitted to websocket gateway',
     }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -190,8 +193,8 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], SimulatorController.prototype, "testEmit", null);
 exports.SimulatorController = SimulatorController = __decorate([
-    (0, swagger_1.ApiTags)("Simulator"),
-    (0, common_1.Controller)("api/simulator"),
+    (0, swagger_1.ApiTags)('Simulator'),
+    (0, common_1.Controller)('api/simulator'),
     __metadata("design:paramtypes", [simulator_service_1.SimulatorService])
 ], SimulatorController);
 //# sourceMappingURL=simulator.controller.js.map

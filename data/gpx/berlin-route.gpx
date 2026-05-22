@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="metroflow-berlin-sample" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk>
+    <name>Berlin Sample Route</name>
+    <trkseg>
+      <trkpt lat="52.520008" lon="13.404954"><time>2026-05-10T17:30:00Z</time></trkpt>
+      <trkpt lat="52.519200" lon="13.408500"><time>2026-05-10T17:31:00Z</time></trkpt>
+      <trkpt lat="52.517800" lon="13.412100"><time>2026-05-10T17:32:00Z</time></trkpt>
+      <trkpt lat="52.516300" lon="13.415900"><time>2026-05-10T17:33:00Z</time></trkpt>
+      <trkpt lat="52.514900" lon="13.420100"><time>2026-05-10T17:34:00Z</time></trkpt>
+      <trkpt lat="52.513700" lon="13.424300"><time>2026-05-10T17:35:00Z</time></trkpt>
+      <trkpt lat="52.512500" lon="13.428800"><time>2026-05-10T17:36:00Z</time></trkpt>
+      <trkpt lat="52.511400" lon="13.433000"><time>2026-05-10T17:37:00Z</time></trkpt>
+      <trkpt lat="52.510200" lon="13.437400"><time>2026-05-10T17:38:00Z</time></trkpt>
+      <trkpt lat="52.509000" lon="13.441500"><time>2026-05-10T17:39:00Z</time></trkpt>
+    </trkseg>
+  </trk>
+</gpx>

@@ -15,6 +15,13 @@ type Station = {
   };
 };
 
+type AgentState = {
+  id: string;
+  agentId: string;
+  location?: { lat: number; lng: number };
+  routeId?: string;
+};
+
 type UserLocation = {
   latitude: number;
   longitude: number;
@@ -42,6 +49,9 @@ const MapView = () => {
   const [suggestions, setSuggestions] = useState<Station[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [agents, setAgents] = useState<AgentState[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [agentIcon, setAgentIcon] = useState<any>(null);
   const mapRef = useRef<L.Map | null>(null); // Update the type of mapRef to L.Map
 
   useEffect(() => {
@@ -53,6 +63,16 @@ const MapView = () => {
           iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
           shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
         });
+        const greenIcon = new leaflet.Icon({
+          iconUrl:
+            'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
+          shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+          shadowSize: [41, 41],
+        });
+        setAgentIcon(greenIcon);
         const mod = await import('react-leaflet');
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setMapContainer(() => mod.MapContainer as any);
@@ -69,6 +89,20 @@ const MapView = () => {
         console.error('Failed to load react-leaflet:', error);
       }
     })();
+  }, []);
+
+  useEffect(() => {
+    const fetchAgents = async () => {
+      try {
+        const { data } = await apiClient.get('/tracking/agents');
+        setAgents(Array.isArray(data) ? data : []);
+      } catch {
+        // non-blocking — simulator may not be running
+      }
+    };
+    fetchAgents();
+    const agentTimer = setInterval(fetchAgents, 5000);
+    return () => clearInterval(agentTimer);
   }, []);
 
   useEffect(() => {
@@ -280,6 +314,9 @@ const MapView = () => {
         <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Live station map</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
           Search stations and visualize realtime data.
+          {agents.length > 0
+            ? ` ${agents.length} active agent${agents.length !== 1 ? 's' : ''} tracked.`
+            : ''}
         </p>
       </div>
 
@@ -440,6 +477,24 @@ const MapView = () => {
                     </Marker>
                   )
               )}
+
+              {agentIcon &&
+                agents.map(agent =>
+                  agent.location?.lat && agent.location?.lng ? (
+                    <Marker
+                      key={agent.id || agent.agentId}
+                      position={[agent.location.lat, agent.location.lng]}
+                      icon={agentIcon}
+                    >
+                      <Popup>
+                        <strong>Agent: {agent.agentId}</strong>
+                        {agent.routeId && (
+                          <div style={{ fontSize: 12 }}>Route: {agent.routeId}</div>
+                        )}
+                      </Popup>
+                    </Marker>
+                  ) : null
+                )}
             </MapContainer>
           )}
         </Card>

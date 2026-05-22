@@ -12,12 +12,13 @@ const realtime_gateway_1 = require("./realtime.gateway");
 const realtime_service_1 = require("./realtime.service");
 const typeorm_1 = require("@nestjs/typeorm");
 const agent_trace_entity_1 = require("../../entities/agent-trace.entity");
+const vbb_module_1 = require("../../vbb/vbb.module");
 let RealtimeModule = class RealtimeModule {
 };
 exports.RealtimeModule = RealtimeModule;
 exports.RealtimeModule = RealtimeModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([agent_trace_entity_1.AgentTrace])],
+        imports: [typeorm_1.TypeOrmModule.forFeature([agent_trace_entity_1.AgentTrace]), vbb_module_1.VbbModule],
         providers: [realtime_gateway_1.RealtimeGateway, realtime_service_1.RealtimeService],
         exports: [realtime_service_1.RealtimeService, realtime_gateway_1.RealtimeGateway],
     })

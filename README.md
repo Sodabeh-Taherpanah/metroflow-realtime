@@ -1,311 +1,109 @@
-# MetroFlow - Real-time Transport Intelligence Platform
+# MetroFlow
 
+MetroFlow is a real-time transit web app.
 
+In simple words:
 
-MetroFlow is a modern, full-stack real-time transport intelligence platform built with Next.js 15 and NestJS.
+- Riders can see stations, departures, and moving vehicles.
+- Ops and admin users can ingest routes, run simulation, and monitor service health.
 
+## What This Project Does
 
-![App Screenshot](images/metroflow_Landing.jpg)
+1. Shows real-time transit data on map and departures pages.
+2. Ingests route files (GTFS/GPX).
+3. Runs simulator agents to replay movement.
+4. Tracks agent history and summary charts.
+5. Checks provider and backend health.
 
+## Web App Flow (Main)
 
+Use this order when you demo the app:
 
-### Frontend
+1. Home (/)
 
-- **Next.js 15,  19, TypeScript** for type safety, Tailwind CSS, ShadCN UI, React Query, WebSocket/SSE, Recharts, Leaflet, Zod, Sentry, Vercel Analytics** for monitoring
+- Start point and navigation.
 
-### Backend
+2. Dashboard (/dashboard)
 
-- **NestJS, TypeScript, REST API + WebSocket Gateway, PostgreSQL/MongoDB, Redis, Pino, Swagger, Class-validator, Sentry
+- Quick service and health overview.
 
-### DevOps & Security
+3. Map (/map)
 
-- **GitHub Actions** for CI/CD, Docker, Helmet, Rate limiting, Strict CSP, Environment variable management, Vercel** for frontend dev, Railway/Render for backend dev
+- Live agents and stations.
 
+4. Departures (/departures)
 
+- Real-time departures with reliability context.
 
-## Architecture
+5. Stations (/stations)
 
-### System Overview
+- Station list plus station insights and provider health.
 
-```mermaid
-flowchart LR
-	User((User)) --> Web[Next.js Frontend]
-	Web -->|REST| API[NestJS Backend]
-	Web -->|WebSocket| API
-	API --> DB[(PostgreSQL)]
-	API --> Cache[(Redis)]
-	API --> Ext[External Transit APIs]
-```
+6. Tracking (/tracking)
 
-### CI/CD Flow
+- Admin flow: ingest route, run simulator, inspect logs and agents.
 
-```mermaid
-sequenceDiagram
-	participant Dev as Developer
-	participant GH as GitHub
-	participant CI as GitHub Actions
-	participant Vercel as Vercel
-	participant Server as Backend Host
+7. Charts (/charts)
 
-	Dev->>GH: Push / PR
-	GH->>CI: Trigger workflow
-	CI->>CI: Lint + Test + Build
-	CI->>Vercel: Deploy Frontend (main)
-	CI->>Server: Deploy Backend (main)
-```
+- Product KPIs, delay impact, coverage by zone, and activity trends.
 
-## Getting Started
+## Data Flow (Simple)
 
-### Prerequisites
+1. Frontend calls /api/...
+2. Next.js proxy rewrites to backend at http://localhost:3001/api/...
+3. Backend reads and writes PostgreSQL and Redis.
+4. Frontend updates via REST polling and websocket events.
 
-- Node.js 18+
-- npm or yarn
-- Docker (optional)
-- PostgreSQL (or use Docker)
+## Tech Stack
 
-### Frontend Setup
+1. Frontend: Next.js, TypeScript, React Query.
+2. Backend: NestJS, TypeORM.
+3. Data: PostgreSQL and Redis.
+
+## Run Locally
+
+1. Start infra
 
 ```bash
-cd frontend
-npm install
-cp .env.local.example .env.local
-npm run dev
+docker compose up -d redis postgres
 ```
 
-Open http://localhost:3000
-
-### Backend Setup
+2. Start backend
 
 ```bash
 cd backend
 npm install
-cp .env.example .env
 npm run dev
 ```
 
-API runs on http://localhost:3001
-Swagger docs: http://localhost:3001/api/docs
-
-### Docker Setup
-
-```bash
-docker-compose up
-```
-
-## Development
-
-### Frontend Commands
-
-```bash
-npm run dev       # Start development server
-npm run build     # Build for production
-npm run lint      # Run ESLint
-npm run format    # Format code with Prettier
-npm run type-check # TypeScript check
-```
-
-### Backend Commands
-
-```bash
-npm run dev       # Start with watch mode
-npm run build     # Build for production
-npm run start     # Run production build
-npm run lint      # Run ESLint
-npm run test      # Run tests
-```
-
-## Step-by-Step Testing
-
-Use this checklist to verify MetroFlow end-to-end from a clean terminal session.
-
-### 1) Pre-checks
-
-- Use Node.js 20.9+ (recommended: Node 22)
-- Install dependencies once:
-
-```bash
-cd backend && npm install
-cd ../frontend && npm install
-```
-
-### 2) Build verification
-
-```bash
-cd backend
-npm run build
-
-cd ../frontend
-npm run build
-```
-
-Expected result: both builds finish without TypeScript errors.
-
-### 3) Start backend API
-
-```bash
-cd backend
-npm run dev
-```
-
-Backend default URL: `http://localhost:3001`
-
-Quick smoke check:
-
-```bash
-curl -s http://localhost:3001/api/ingest/routes | jq .
-```
-
-Expected result: JSON response with `dataDir`, `rawDir`, `canonicalDir`, and `routes`.
-
-### 4) Run ingest probe test (GTFS)
-
-In a new terminal:
-
-```bash
-curl -s -X POST http://localhost:3001/api/ingest/probe \
-	-H "Content-Type: application/json" \
-	-d '{"gtfsZipPath":"./data/gtfs/sample-gtfs.zip"}' | jq .
-```
-
-Expected result: `{ "jobId": "...", "status": "queued" }`
-
-Poll job status:
-
-```bash
-curl -s http://localhost:3001/api/ingest/jobs/<jobId> | jq .
-```
-
-Expected result: `status: "completed"` and a `result` object containing:
-
-- `stats` (`shapeCount`, `pointCount`, `canonicalPointCount`)
-- `routeArtifacts` with `rawPath` and `canonicalPath`
-- optional `validationWarnings`
-
-### 5) Verify generated artifacts
-
-```bash
-curl -s http://localhost:3001/api/ingest/routes | jq .
-```
-
-Expected result: each route includes raw and canonical file paths and point counts.
-
-Inspect one canonical file:
-
-```bash
-cat backend/data/canonical/route-shape_A.geojson | jq .
-```
-
-Expected result: valid GeoJSON `FeatureCollection` with a `LineString` geometry.
-
-### 6) Start frontend and verify tracking page
-
-In a separate terminal:
+3. Start frontend
 
 ```bash
 cd frontend
+npm install
 npm run dev
 ```
 
-Open: `http://localhost:3000/tracking`
+4. Open
 
-Manual checks on `/tracking`:
+- App: http://localhost:3000
+- API: http://localhost:3001
+- API docs: http://localhost:3001/api/docs
 
-- Click **Probe GTFS/GPX** and wait for completion
-- Confirm **Logs** shows queued/completed status
-- Confirm **Route List** shows route entries
-- Toggle **Raw / Canonical** and verify point counts/path values update
+## Product Value Additions (UI-First)
 
-Optional terminal check:
+1. Service coverage by zone.
+2. Delay impact and passengers affected.
+3. Estimated delay cost avoided.
+4. Monthly report preview cards.
+5. Rich departures with transfer and reliability hints.
+6. Station insight text for business context.
 
-```bash
-curl -s http://localhost:3000/tracking >/dev/null && echo "Tracking page reachable"
-```
+## Quick Interview Pitch
 
-### 7) Automated test commands
+MetroFlow is a dual-surface transit product: rider experience plus operations control. Riders get real-time map and departures. Operations teams get ingest, simulation, tracking, and health tools to validate quality before release.
 
-Frontend:
+## Notes
 
-```bash
-cd frontend
-npm run test
-npm run test:e2e
-```
-
-Backend:
-
-```bash
-cd backend
-npm run test
-npm run test:e2e
-```
-
-### 8) Common troubleshooting
-
-- Port already in use (3001):
-
-```bash
-lsof -i :3001 | grep -v COMMAND | awk '{print $2}' | xargs -r kill -9
-```
-
-- Next.js Node version error: switch Node version before running frontend:
-
-```bash
-nvm use 22
-```
-
-## Environment Variables
-
-### Frontend (.env.local)
-
-See `.env.local.example`
-
-### Backend (.env)
-
-See `.env.example`
-
-## Database Migrations
-
-```bash
-cd backend
-npm run typeorm migration:generate -- -n MigrationName
-npm run typeorm migration:run
-```
-
-## Deployment
-
-### Frontend (Vercel)
-
-```bash
-vercel deploy
-```
-
-### Backend (Railway/Render)
-
-- Connect GitHub repository
-- Set environment variables
-- Deploy
-
-## Versioning Strategy
-
-We use **Semantic Versioning (SemVer)**: $MAJOR.MINOR.PATCH$.
-
-- **MAJOR**: breaking changes
-- **MINOR**: new features (backwards compatible)
-- **PATCH**: bug fixes and small improvements
-
-Recommended release flow:
-
-1. Merge to `main` via PR
-2. Create a git tag like `v1.2.3`
-3. Publish release notes
-
-## Contributing
-
-1. Create feature branch: `git checkout -b feature/name`
-2. Commit changes: `git commit -am 'Add feature'`
-3. Push to branch: `git push origin feature/name`
-4. Create Pull Request
-
-## License
-
-MIT
+1. For realistic Berlin demos, ingest a Berlin GPX and run simulator with that route.
+2. Trace charts require ENABLE_TRACES=true on backend.

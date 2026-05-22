@@ -5,10 +5,11 @@ import {
   Get,
   Param,
   Post,
-} from "@nestjs/common";
-import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
-import { IsOptional, IsString } from "class-validator";
-import { SimulatorService } from "./simulator.service";
+} from '@nestjs/common';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
+import { IsOptional, IsString } from 'class-validator';
+import { SimulatorService } from './simulator.service';
 
 class TestEmitDto {
   @IsOptional()
@@ -61,48 +62,49 @@ class StartSimulatorDto {
   speedKph?: string;
 }
 
-@ApiTags("Simulator")
-@Controller("api/simulator")
+@ApiTags('Simulator')
+@Controller('api/simulator')
 export class SimulatorController {
   constructor(private readonly simulatorService: SimulatorService) {}
 
   @Get()
-  @ApiOperation({ summary: "List simulator jobs" })
-  @ApiResponse({ status: 200, description: "Simulation job list" })
+  @ApiOperation({ summary: 'List simulator jobs' })
+  @ApiResponse({ status: 200, description: 'Simulation job list' })
   getStatus() {
     return {
       jobs: this.simulatorService.listSimulationJobs(),
     };
   }
 
-  @Get("jobs/:jobId")
-  @ApiOperation({ summary: "Get simulator job status" })
-  @ApiResponse({ status: 200, description: "Simulation job payload" })
-  getJob(@Param("jobId") jobId: string) {
+  @Get('jobs/:jobId')
+  @ApiOperation({ summary: 'Get simulator job status' })
+  @ApiResponse({ status: 200, description: 'Simulation job payload' })
+  getJob(@Param('jobId') jobId: string) {
     return this.simulatorService.getSimulationJob(jobId);
   }
 
-  @Post("start")
-  @ApiOperation({ summary: "Start simulator replay run" })
-  @ApiResponse({ status: 201, description: "Simulation started" })
+  @Post('start')
+  @Throttle({ default: { limit: 10, ttl: 60 } })
+  @ApiOperation({ summary: 'Start simulator replay run' })
+  @ApiResponse({ status: 201, description: 'Simulation started' })
   start(@Body() body: StartSimulatorDto) {
-    const intervalMs = this.parsePositiveNumber(body.intervalMs, "intervalMs");
-    const agents = this.parsePositiveNumber(body.agents, "agents");
+    const intervalMs = this.parsePositiveNumber(body.intervalMs, 'intervalMs');
+    const agents = this.parsePositiveNumber(body.agents, 'agents');
     const jitterMeters = this.parseNonNegativeNumber(
       body.jitterMeters,
-      "jitterMeters",
+      'jitterMeters',
     );
-    const speedKph = this.parsePositiveNumber(body.speedKph, "speedKph");
+    const speedKph = this.parsePositiveNumber(body.speedKph, 'speedKph');
 
     let loop: boolean | undefined;
     if (body.loop !== undefined) {
       const value = body.loop.trim().toLowerCase();
-      if (value === "true" || value === "1") {
+      if (value === 'true' || value === '1') {
         loop = true;
-      } else if (value === "false" || value === "0") {
+      } else if (value === 'false' || value === '0') {
         loop = false;
       } else {
-        throw new BadRequestException("loop must be true/false.");
+        throw new BadRequestException('loop must be true/false.');
       }
     }
 
@@ -116,11 +118,12 @@ export class SimulatorController {
     });
   }
 
-  @Post("test-emit")
-  @ApiOperation({ summary: "Emit one agent.location.update test event" })
+  @Post('test-emit')
+  @Throttle({ default: { limit: 30, ttl: 60 } })
+  @ApiOperation({ summary: 'Emit one agent.location.update test event' })
   @ApiResponse({
     status: 200,
-    description: "Event emitted to websocket gateway",
+    description: 'Event emitted to websocket gateway',
   })
   testEmit(@Body() body: TestEmitDto) {
     return this.simulatorService.emitTestUpdate({

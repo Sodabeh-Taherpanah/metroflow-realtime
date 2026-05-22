@@ -16,8 +16,15 @@ type ProviderStatus = {
 };
 
 const fetchProviderStatus = async (): Promise<ProviderStatus[]> => {
-  const { data } = await apiClient.get('/providers/status');
-  return Array.isArray(data) ? data : [];
+  const { data } = await apiClient.get<{
+    checks?: { database?: 'up' | 'down'; redis?: 'up' | 'down' };
+  }>('/health');
+
+  const checks = data?.checks ?? {};
+  return [
+    { id: 'database', name: 'Database', isOnline: checks.database === 'up' },
+    { id: 'redis', name: 'Redis', isOnline: checks.redis === 'up' },
+  ];
 };
 
 const ProviderStatusDashboard = () => {

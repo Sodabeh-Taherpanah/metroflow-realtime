@@ -22,6 +22,7 @@ const zod_1 = require("zod");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const agent_trace_entity_1 = require("../../entities/agent-trace.entity");
+const vbb_service_1 = require("../../vbb/vbb.service");
 const AgentLocationUpdateSchema = zod_1.z.object({
     id: zod_1.z.string().min(1),
     type: zod_1.z.literal('agent.location.update').optional(),
@@ -37,9 +38,10 @@ const AgentLocationUpdateSchema = zod_1.z.object({
     timestamp: zod_1.z.string().datetime().optional(),
 });
 let RealtimeGateway = class RealtimeGateway {
-    constructor(cacheManager, agentTraceRepository) {
+    constructor(cacheManager, agentTraceRepository, vbbService) {
         this.cacheManager = cacheManager;
         this.agentTraceRepository = agentTraceRepository;
+        this.vbbService = vbbService;
         this.departureIntervals = new Map();
         this.stationSubscriptions = new Map();
         this.redisClient = null;
@@ -125,6 +127,18 @@ let RealtimeGateway = class RealtimeGateway {
         catch (error) {
             console.error('Cache retrieval error:', error);
         }
+        try {
+            const departures = await this.vbbService.getDepartures(stationId);
+            if (Array.isArray(departures) && departures.length > 0) {
+                await this.cacheManager
+                    .set(cacheKey, departures, 60 * 1000)
+                    .catch(() => { });
+                return departures;
+            }
+        }
+        catch (error) {
+            console.error(`VBB departures fetch failed for station ${stationId}:`, error);
+        }
         return this.generateMockDepartures(stationId);
     }
     async updateDepartures(stationId, departures) {
@@ -142,40 +156,31 @@ let RealtimeGateway = class RealtimeGateway {
         }
     }
     generateMockDepartures(stationId) {
-        const now = Date.now();
+        const now = new Date();
         return [
             {
-                id: `${stationId}-1`,
-                stationId,
-                lineNumber: 'U6',
+                tripId: `${stationId}-trip-1`,
+                stop: { id: stationId, name: 'Berlin, Staaken Bhf' },
+                when: new Date(now.getTime() + 2 * 60000).toISOString(),
+                plannedWhen: new Date(now.getTime() + 2 * 60000).toISOString(),
                 direction: 'Alt-Tegel',
-                departureTime: new Date(now + 2 * 60000),
-                delayMinutes: 1,
-                platform: 'A',
-                realtime: true,
-                timestamp: now,
+                line: { name: 'U6', id: 'u6' },
             },
             {
-                id: `${stationId}-2`,
-                stationId,
-                lineNumber: 'S1',
+                tripId: `${stationId}-trip-2`,
+                stop: { id: stationId, name: 'Berlin, Staaken Bhf' },
+                when: new Date(now.getTime() + 5 * 60000).toISOString(),
+                plannedWhen: new Date(now.getTime() + 5 * 60000).toISOString(),
                 direction: 'Frohnau',
-                departureTime: new Date(now + 5 * 60000),
-                delayMinutes: 0,
-                platform: 'B',
-                realtime: true,
-                timestamp: now,
+                line: { name: 'S1', id: 's1' },
             },
             {
-                id: `${stationId}-3`,
-                stationId,
-                lineNumber: 'RE3',
+                tripId: `${stationId}-trip-3`,
+                stop: { id: stationId, name: 'Berlin, Staaken Bhf' },
+                when: new Date(now.getTime() + 8 * 60000).toISOString(),
+                plannedWhen: new Date(now.getTime() + 10 * 60000).toISOString(),
                 direction: 'Stralsund',
-                departureTime: new Date(now + 8 * 60000),
-                delayMinutes: -2,
-                platform: '5',
-                realtime: false,
-                timestamp: now,
+                line: { name: 'RE3', id: 're3' },
             },
         ];
     }
@@ -314,6 +319,7 @@ exports.RealtimeGateway = RealtimeGateway = __decorate([
     }),
     __param(0, (0, common_1.Inject)(cache_manager_1.CACHE_MANAGER)),
     __param(1, (0, typeorm_1.InjectRepository)(agent_trace_entity_1.AgentTrace)),
-    __metadata("design:paramtypes", [Object, typeorm_2.Repository])
+    __metadata("design:paramtypes", [Object, typeorm_2.Repository,
+        vbb_service_1.VbbService])
 ], RealtimeGateway);
 //# sourceMappingURL=realtime.gateway.js.map

@@ -1,4 +1,5 @@
-import { IngestService, type GpxUploadFile } from "./ingest.service";
+import { Response } from 'express';
+import { IngestService, type GpxUploadFile } from './ingest.service';
 declare class ProbeIngestDto {
     gtfsZipPath?: string;
     gpxContent?: string;
@@ -18,7 +19,7 @@ export declare class IngestController {
     };
     getProbeJob(jobId: string): {
         jobId: string;
-        status: "completed" | "queued" | "running" | "failed";
+        status: "running" | "completed" | "failed" | "queued";
         createdAt: string;
         updatedAt: string;
         error?: string;
@@ -54,6 +55,10 @@ export declare class IngestController {
             };
         };
     };
+    getProbeLogs(jobId: string, limit?: string): {
+        jobId: string;
+        lines: string[];
+    };
     getRoutes(): {
         dataDir: string;
         rawDir: string;
@@ -68,6 +73,7 @@ export declare class IngestController {
             canonicalPointCount?: number;
         }[];
     };
+    downloadRouteArtifact(routeId: string, view: 'raw' | 'canonical' | 'samples', res: Response): void;
     sampleRoute(body: SampleRouteDto): {
         routeId: string;
         sourcePath: string;

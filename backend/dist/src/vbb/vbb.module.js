@@ -20,6 +20,7 @@ exports.VbbModule = VbbModule = __decorate([
         imports: [axios_1.HttpModule],
         controllers: [vbb_controller_1.VbbController],
         providers: [vbb_service_1.VbbService, vbb_service_2.VbbService],
+        exports: [vbb_service_1.VbbService],
     })
 ], VbbModule);
 //# sourceMappingURL=vbb.module.js.map

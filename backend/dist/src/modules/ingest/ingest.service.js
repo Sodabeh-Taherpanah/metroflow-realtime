@@ -12,11 +12,12 @@ const common_1 = require("@nestjs/common");
 const fs_1 = require("fs");
 const crypto_1 = require("crypto");
 const path_1 = require("path");
-const AdmZip = require("adm-zip");
+const AdmZip = require('adm-zip');
 let IngestService = IngestService_1 = class IngestService {
     constructor() {
         this.logger = new common_1.Logger(IngestService_1.name);
         this.jobs = new Map();
+        this.jobLogs = new Map();
         this.defaultTolerance = Number(process.env.NORMALIZATION_TOLERANCE || 0.00003);
         this.snapPrecision = Number(process.env.SNAP_PRECISION || 6);
         this.defaultSampleSpacingMeters = Number(process.env.SAMPLE_SPACING_METERS || 20);
@@ -25,21 +26,74 @@ let IngestService = IngestService_1 = class IngestService {
         const hasGtfsPath = Boolean(input.gtfsZipPath?.trim());
         const hasGpx = Boolean(input.gpxFile || input.gpxContent?.trim());
         if (!hasGtfsPath && !hasGpx) {
-            throw new common_1.BadRequestException("Provide either gtfsZipPath or gpxFile/gpxContent.");
+            throw new common_1.BadRequestException('Provide either gtfsZipPath or gpxFile/gpxContent.');
         }
         const jobId = (0, crypto_1.randomUUID)();
         const now = new Date().toISOString();
         this.jobs.set(jobId, {
             jobId,
-            status: "queued",
+            status: 'queued',
             createdAt: now,
             updatedAt: now,
         });
-        this.logger.log(`[probe:${jobId}] queued gtfsZipPath=${input.gtfsZipPath || "none"} gpxFile=${input.gpxFile?.originalname || "none"}`);
+        this.jobLogs.set(jobId, []);
+        this.appendJobLog(jobId, `queued gtfsZipPath=${input.gtfsZipPath || 'none'} gpxFile=${input.gpxFile?.originalname || 'none'}`);
         setTimeout(() => {
             this.processProbeJob(jobId, input);
         }, 0);
-        return { jobId, status: "queued" };
+        return { jobId, status: 'queued' };
+    }
+    getProbeLogs(jobId, limit) {
+        if (!this.jobs.has(jobId)) {
+            throw new common_1.NotFoundException(`Probe job not found: ${jobId}`);
+        }
+        const max = Number.isFinite(limit)
+            ? Math.min(500, Math.max(1, Number(limit)))
+            : 200;
+        const lines = this.jobLogs.get(jobId) || [];
+        return {
+            jobId,
+            lines: lines.slice(-max),
+        };
+    }
+    resolveDownloadPath(input) {
+        const routeId = input.routeId?.trim();
+        if (!routeId) {
+            throw new common_1.BadRequestException('routeId is required.');
+        }
+        const view = input.view || 'canonical';
+        const route = this.findRouteArtifact(routeId);
+        const safeId = this.safeFileSegment(routeId);
+        if (view === 'raw') {
+            if (!route.rawPath || !(0, fs_1.existsSync)(route.rawPath)) {
+                throw new common_1.NotFoundException(`Raw artifact not found for route ${routeId}.`);
+            }
+            return {
+                filePath: route.rawPath,
+                fileName: `route-${safeId}-raw.geojson`,
+            };
+        }
+        if (view === 'canonical') {
+            if (!route.canonicalPath || !(0, fs_1.existsSync)(route.canonicalPath)) {
+                throw new common_1.NotFoundException(`Canonical artifact not found for route ${routeId}.`);
+            }
+            return {
+                filePath: route.canonicalPath,
+                fileName: `route-${safeId}-canonical.geojson`,
+            };
+        }
+        const { samplesDir } = this.resolveDataDirs();
+        const outputPath = (0, path_1.resolve)(samplesDir, `route-${safeId}-samples.json`);
+        if (!(0, fs_1.existsSync)(outputPath)) {
+            this.sampleRoute({ routeId });
+        }
+        if (!(0, fs_1.existsSync)(outputPath)) {
+            throw new common_1.NotFoundException(`Sample output not found for route ${routeId}.`);
+        }
+        return {
+            filePath: outputPath,
+            fileName: `route-${safeId}-samples.json`,
+        };
     }
     getProbeJob(jobId) {
         const job = this.jobs.get(jobId);
@@ -51,7 +105,7 @@ let IngestService = IngestService_1 = class IngestService {
     sampleRoute(input) {
         const routeId = input.routeId?.trim();
         if (!routeId) {
-            throw new common_1.BadRequestException("routeId is required.");
+            throw new common_1.BadRequestException('routeId is required.');
         }
         const spacingMeters = this.resolveSpacingMeters(input.spacingMeters);
         const route = this.findRouteArtifact(routeId);
@@ -59,8 +113,8 @@ let IngestService = IngestService_1 = class IngestService {
         if (!sourcePath) {
             throw new common_1.NotFoundException(`No route artifact found for routeId=${routeId}. Run probe first.`);
         }
-        const geojson = JSON.parse((0, fs_1.readFileSync)(sourcePath, "utf-8"));
-        const coordinates = geojson?.features?.[0]?.geometry?.type === "LineString"
+        const geojson = JSON.parse((0, fs_1.readFileSync)(sourcePath, 'utf-8'));
+        const coordinates = geojson?.features?.[0]?.geometry?.type === 'LineString'
             ? geojson?.features?.[0]?.geometry?.coordinates
             : undefined;
         if (!Array.isArray(coordinates) || coordinates.length < 2) {
@@ -104,12 +158,12 @@ let IngestService = IngestService_1 = class IngestService {
         const routesMap = new Map();
         const applyFile = (filePath, isCanonical) => {
             try {
-                const file = JSON.parse((0, fs_1.readFileSync)(filePath, "utf-8"));
+                const file = JSON.parse((0, fs_1.readFileSync)(filePath, 'utf-8'));
                 const feature = file?.features?.[0];
                 const properties = feature?.properties || {};
                 const points = feature?.geometry?.coordinates || [];
                 const id = properties.shape_id ||
-                    (0, path_1.basename)(filePath, (0, path_1.extname)(filePath)).replace(/^route-/, "");
+                    (0, path_1.basename)(filePath, (0, path_1.extname)(filePath)).replace(/^route-/, '');
                 const existing = routesMap.get(id) || { id };
                 if (isCanonical) {
                     existing.canonicalPath = filePath;
@@ -135,12 +189,12 @@ let IngestService = IngestService_1 = class IngestService {
             }
         };
         for (const file of (0, fs_1.readdirSync)(rawDir)) {
-            if (file.endsWith(".geojson")) {
+            if (file.endsWith('.geojson')) {
                 applyFile((0, path_1.resolve)(rawDir, file), false);
             }
         }
         for (const file of (0, fs_1.readdirSync)(canonicalDir)) {
-            if (file.endsWith(".geojson")) {
+            if (file.endsWith('.geojson')) {
                 applyFile((0, path_1.resolve)(canonicalDir, file), true);
             }
         }
@@ -156,10 +210,10 @@ let IngestService = IngestService_1 = class IngestService {
         if (!job) {
             return;
         }
-        job.status = "running";
+        job.status = 'running';
         job.updatedAt = new Date().toISOString();
         this.jobs.set(jobId, job);
-        this.logger.log(`[probe:${jobId}] started gtfsZipPath=${input.gtfsZipPath || "none"} gpxFile=${input.gpxFile?.originalname || "none"}`);
+        this.appendJobLog(jobId, `started gtfsZipPath=${input.gtfsZipPath || 'none'} gpxFile=${input.gpxFile?.originalname || 'none'}`);
         try {
             const hasGtfsPath = Boolean(input.gtfsZipPath?.trim());
             const tolerance = this.resolveTolerance(input.normalizationTolerance);
@@ -167,22 +221,29 @@ let IngestService = IngestService_1 = class IngestService {
                 ? this.probeGtfs(input.gtfsZipPath.trim())
                 : this.probeGpx(input.gpxFile, input.gpxContent);
             const result = this.writeArtifacts(jobId, buildOutput.sourceType, buildOutput.routes, buildOutput.warnings, tolerance);
-            job.status = "completed";
+            job.status = 'completed';
             job.result = result;
             job.updatedAt = new Date().toISOString();
             this.jobs.set(jobId, job);
-            this.logger.log(`[probe:${jobId}] completed source=${result.sourceType} shapes=${result.stats.shapeCount} points=${result.stats.pointCount} canonicalPoints=${result.stats.canonicalPointCount}`);
+            this.appendJobLog(jobId, `completed source=${result.sourceType} shapes=${result.stats.shapeCount} points=${result.stats.pointCount} canonicalPoints=${result.stats.canonicalPointCount}`);
         }
         catch (error) {
             const message = error instanceof Error
                 ? error.message
-                : "Unknown probe processing error";
-            job.status = "failed";
+                : 'Unknown probe processing error';
+            job.status = 'failed';
             job.error = message;
             job.updatedAt = new Date().toISOString();
             this.jobs.set(jobId, job);
-            this.logger.error(`[probe:${jobId}] failed: ${message}`);
+            this.appendJobLog(jobId, `failed: ${message}`);
         }
+    }
+    appendJobLog(jobId, message) {
+        const line = `${new Date().toISOString()} ${message}`;
+        const current = this.jobLogs.get(jobId) || [];
+        const updated = [...current, line].slice(-500);
+        this.jobLogs.set(jobId, updated);
+        this.logger.log(`[probe:${jobId}] ${message}`);
     }
     probeGtfs(gtfsZipPath) {
         const resolvedPath = (0, path_1.isAbsolute)(gtfsZipPath)
@@ -202,24 +263,24 @@ let IngestService = IngestService_1 = class IngestService {
             .getEntries()
             .find((entry) => /(^|\/)routes\.txt$/i.test(entry.entryName));
         if (!shapesEntry) {
-            throw new common_1.BadRequestException("Invalid GTFS zip: shapes.txt not found in archive.");
+            throw new common_1.BadRequestException('Invalid GTFS zip: shapes.txt not found in archive.');
         }
         const csv = zip.readAsText(shapesEntry);
         const rows = this.parseCsvText(csv);
         const warnings = [];
         if (rows.length === 0) {
-            throw new common_1.BadRequestException("Invalid shapes.txt: no rows found.");
+            throw new common_1.BadRequestException('Invalid shapes.txt: no rows found.');
         }
         const headers = this.parseCsvLine(rows[0]);
-        const shapeIdIndex = headers.indexOf("shape_id");
-        const shapeLatIndex = headers.indexOf("shape_pt_lat");
-        const shapeLonIndex = headers.indexOf("shape_pt_lon");
-        const shapeSeqIndex = headers.indexOf("shape_pt_sequence");
+        const shapeIdIndex = headers.indexOf('shape_id');
+        const shapeLatIndex = headers.indexOf('shape_pt_lat');
+        const shapeLonIndex = headers.indexOf('shape_pt_lon');
+        const shapeSeqIndex = headers.indexOf('shape_pt_sequence');
         if (shapeIdIndex < 0 ||
             shapeLatIndex < 0 ||
             shapeLonIndex < 0 ||
             shapeSeqIndex < 0) {
-            throw new common_1.BadRequestException("Invalid shapes.txt: required columns are shape_id, shape_pt_lat, shape_pt_lon, shape_pt_sequence.");
+            throw new common_1.BadRequestException('Invalid shapes.txt: required columns are shape_id, shape_pt_lat, shape_pt_lon, shape_pt_sequence.');
         }
         const points = [];
         for (let index = 1; index < rows.length; index += 1) {
@@ -243,8 +304,8 @@ let IngestService = IngestService_1 = class IngestService {
             const tripsRows = this.parseCsvText(zip.readAsText(tripsEntry));
             if (tripsRows.length > 0) {
                 const tripHeaders = this.parseCsvLine(tripsRows[0]);
-                const tripShapeIdx = tripHeaders.indexOf("shape_id");
-                const tripRouteIdx = tripHeaders.indexOf("route_id");
+                const tripShapeIdx = tripHeaders.indexOf('shape_id');
+                const tripRouteIdx = tripHeaders.indexOf('route_id');
                 if (tripShapeIdx >= 0 && tripRouteIdx >= 0) {
                     for (let index = 1; index < tripsRows.length; index += 1) {
                         const columns = this.parseCsvLine(tripsRows[index]);
@@ -262,9 +323,9 @@ let IngestService = IngestService_1 = class IngestService {
             const routeRows = this.parseCsvText(zip.readAsText(routesEntry));
             if (routeRows.length > 0) {
                 const routeHeaders = this.parseCsvLine(routeRows[0]);
-                const routeIdIdx = routeHeaders.indexOf("route_id");
-                const longNameIdx = routeHeaders.indexOf("route_long_name");
-                const shortNameIdx = routeHeaders.indexOf("route_short_name");
+                const routeIdIdx = routeHeaders.indexOf('route_id');
+                const longNameIdx = routeHeaders.indexOf('route_long_name');
+                const shortNameIdx = routeHeaders.indexOf('route_short_name');
                 if (routeIdIdx >= 0) {
                     for (let index = 1; index < routeRows.length; index += 1) {
                         const columns = this.parseCsvLine(routeRows[index]);
@@ -304,14 +365,14 @@ let IngestService = IngestService_1 = class IngestService {
             });
         }
         if (routes.length === 0) {
-            throw new common_1.BadRequestException(`No valid route geometries generated from GTFS. ${warnings.join(" | ")}`);
+            throw new common_1.BadRequestException(`No valid route geometries generated from GTFS. ${warnings.join(' | ')}`);
         }
-        return { sourceType: "gtfs", routes, warnings };
+        return { sourceType: 'gtfs', routes, warnings };
     }
     probeGpx(gpxFile, gpxContent) {
-        const xml = gpxFile?.buffer?.toString("utf-8") || gpxContent || "";
+        const xml = gpxFile?.buffer?.toString('utf-8') || gpxContent || '';
         if (!xml.trim()) {
-            throw new common_1.BadRequestException("GPX payload is empty.");
+            throw new common_1.BadRequestException('GPX payload is empty.');
         }
         const warnings = [];
         const routes = [];
@@ -320,7 +381,7 @@ let IngestService = IngestService_1 = class IngestService {
             tracks.forEach((track, index) => {
                 const trackName = track.match(/<name>([^<]+)<\/name>/i)?.[1]?.trim() ||
                     `gpx-track-${index + 1}`;
-                const points = this.extractGpxPoints(track, "trkpt");
+                const points = this.extractGpxPoints(track, 'trkpt');
                 const deduped = this.removeExactDuplicates(points);
                 if (deduped.length < 2) {
                     warnings.push(`Track ${trackName}: fewer than 2 points; skipped.`);
@@ -334,20 +395,20 @@ let IngestService = IngestService_1 = class IngestService {
             });
         }
         if (routes.length === 0) {
-            const routePoints = this.extractGpxPoints(xml, "rtept");
+            const routePoints = this.extractGpxPoints(xml, 'rtept');
             const deduped = this.removeExactDuplicates(routePoints);
             if (deduped.length >= 2) {
                 routes.push({
-                    id: "gpx-route-1",
-                    routeName: "gpx-route-1",
+                    id: 'gpx-route-1',
+                    routeName: 'gpx-route-1',
                     coordinates: deduped,
                 });
             }
         }
         if (routes.length === 0) {
-            throw new common_1.BadRequestException("No valid GPX track/route points found.");
+            throw new common_1.BadRequestException('No valid GPX track/route points found.');
         }
-        return { sourceType: "gpx", routes, warnings };
+        return { sourceType: 'gpx', routes, warnings };
     }
     writeArtifacts(jobId, sourceType, routes, warnings, tolerance) {
         const { rawDir, canonicalDir } = this.resolveDataDirs();
@@ -381,7 +442,7 @@ let IngestService = IngestService_1 = class IngestService {
             });
         }
         if (routeArtifacts.length === 0) {
-            throw new common_1.BadRequestException(`No artifacts generated. ${warnings.join(" | ")}`);
+            throw new common_1.BadRequestException(`No artifacts generated. ${warnings.join(' | ')}`);
         }
         const shapes = routeArtifacts.map((route) => ({
             id: route.id,
@@ -394,7 +455,7 @@ let IngestService = IngestService_1 = class IngestService {
         const canonicalPointCount = shapes.reduce((sum, shape) => sum + shape.canonicalPointCount, 0);
         return {
             jobId,
-            status: "completed",
+            status: 'completed',
             sourceType,
             stats: {
                 shapeCount: shapes.length,
@@ -411,17 +472,17 @@ let IngestService = IngestService_1 = class IngestService {
         };
     }
     resolveDataDirs() {
-        const configuredDataDir = process.env.DATA_DIR || "./data";
+        const configuredDataDir = process.env.DATA_DIR || './data';
         const dataDir = (0, path_1.isAbsolute)(configuredDataDir)
             ? configuredDataDir
             : (0, path_1.resolve)(process.cwd(), configuredDataDir);
-        const rawDir = (0, path_1.resolve)(dataDir, "raw");
-        const canonicalDir = (0, path_1.resolve)(dataDir, "canonical");
-        const samplesDir = (0, path_1.resolve)(dataDir, "samples");
+        const rawDir = (0, path_1.resolve)(dataDir, 'raw');
+        const canonicalDir = (0, path_1.resolve)(dataDir, 'canonical');
+        const samplesDir = (0, path_1.resolve)(dataDir, 'samples');
         return { dataDir, rawDir, canonicalDir, samplesDir };
     }
     resolveSpacingMeters(value) {
-        if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+        if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
             return value;
         }
         if (Number.isFinite(this.defaultSampleSpacingMeters) &&
@@ -530,7 +591,7 @@ let IngestService = IngestService_1 = class IngestService {
         return Number(((bearingDeg + 360) % 360 || 0).toFixed(3));
     }
     resolveTolerance(value) {
-        if (typeof value === "number" && Number.isFinite(value) && value >= 0) {
+        if (typeof value === 'number' && Number.isFinite(value) && value >= 0) {
             return value;
         }
         return this.defaultTolerance;
@@ -542,11 +603,11 @@ let IngestService = IngestService_1 = class IngestService {
             .filter(Boolean);
     }
     extractGpxPoints(xmlChunk, tag) {
-        const regex = new RegExp(`<${tag}\\b([^>]*)>`, "gi");
+        const regex = new RegExp(`<${tag}\\b([^>]*)>`, 'gi');
         const points = [];
         let match = regex.exec(xmlChunk);
         while (match) {
-            const attributes = match[1] || "";
+            const attributes = match[1] || '';
             const lat = Number(attributes.match(/lat="([^"]+)"/i)?.[1]);
             const lon = Number(attributes.match(/lon="([^"]+)"/i)?.[1]);
             if (!Number.isNaN(lat) && !Number.isNaN(lon)) {
@@ -558,7 +619,7 @@ let IngestService = IngestService_1 = class IngestService {
     }
     removeExactDuplicates(coordinates) {
         const deduped = [];
-        let lastKey = "";
+        let lastKey = '';
         for (const coordinate of coordinates) {
             const key = `${coordinate[0]}:${coordinate[1]}`;
             if (key !== lastKey) {
@@ -610,17 +671,17 @@ let IngestService = IngestService_1 = class IngestService {
     }
     asFeatureCollection(route, coordinates) {
         return {
-            type: "FeatureCollection",
+            type: 'FeatureCollection',
             features: [
                 {
-                    type: "Feature",
+                    type: 'Feature',
                     properties: {
                         shape_id: route.id,
                         route_id: route.routeId || null,
                         route_name: route.routeName || null,
                     },
                     geometry: {
-                        type: "LineString",
+                        type: 'LineString',
                         coordinates,
                     },
                 },
@@ -630,13 +691,13 @@ let IngestService = IngestService_1 = class IngestService {
     safeFileSegment(value) {
         return (value
             .trim()
-            .replace(/[^a-zA-Z0-9_-]+/g, "-")
-            .replace(/-+/g, "-")
-            .replace(/^-|-$/g, "") || "route");
+            .replace(/[^a-zA-Z0-9_-]+/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '') || 'route');
     }
     parseCsvLine(line) {
         const values = [];
-        let current = "";
+        let current = '';
         let insideQuotes = false;
         for (let index = 0; index < line.length; index += 1) {
             const char = line[index];
@@ -651,9 +712,9 @@ let IngestService = IngestService_1 = class IngestService {
                 }
                 continue;
             }
-            if (char === "," && !insideQuotes) {
+            if (char === ',' && !insideQuotes) {
                 values.push(current);
-                current = "";
+                current = '';
                 continue;
             }
             current += char;
