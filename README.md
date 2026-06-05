@@ -2,6 +2,9 @@
 
 MetroFlow is a real-time transit web app.
 
+<img width="1792" height="1120" alt="Screenshot 2026-05-22 at 6 54 52 PM" src="https://github.com/user-attachments/assets/cb9b2840-6ce8-4610-97cb-819244a27abc" />
+
+
 In simple words:
 
 - Riders can see stations, departures, and moving vehicles.
